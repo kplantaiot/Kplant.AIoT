@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pio run)",
+      "Bash(dir /s /b \"c:\\\\Kittypau\\\\6 _KPCL0040_1b\")"
+    ]
+  }
+}

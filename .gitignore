@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+
+# PlatformIO
+.pio/
+
+# Archivos sensibles
+*.pem
+*.key
+*.crt
+.env
+
+# Build outputs
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
