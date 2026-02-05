@@ -28,6 +28,7 @@ void loadWifiCredentials() {
         knownNetworks.push_back({WIFI_SSID, WIFI_PASS});
         knownNetworks.push_back({"Casa 15", "mateo916"});
         knownNetworks.push_back({"Suarez_Mujica_891", "SuarezMujica891"});
+        knownNetworks.push_back({"VTR-2736410_2g", "wp8Fjtwyydhq"});
         return;
     }
     File f = LittleFS.open(WIFI_CRED_FILE, "r");
