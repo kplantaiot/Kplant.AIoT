@@ -341,7 +341,7 @@ El sistema usa los siguientes topics:
 2. Crear cuenta o iniciar sesión
 3. Clic en **New Project**
 4. Configurar:
-   - Nombre: `Kittypaw_1a`
+   - Nombre: `Kittypau_1a`
    - Contraseña de base de datos
    - Región más cercana
 

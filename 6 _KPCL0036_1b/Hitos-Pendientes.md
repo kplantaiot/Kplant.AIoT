@@ -1,4 +1,4 @@
-# Listado de Pendientes - Proyecto KittyPaw
+# Listado de Pendientes - Proyecto KittyPau
 
 Este documento sirve como una guía para el desarrollo del proyecto, documentando los hitos alcanzados y las tareas pendientes.
 
