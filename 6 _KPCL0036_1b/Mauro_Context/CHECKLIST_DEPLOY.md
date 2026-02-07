@@ -47,20 +47,22 @@ Agregar en **Settings -> Environment Variables**:
 - [x] Raspberry Pi Zero 2 W con Raspberry Pi OS Lite.
 - [x] Node.js v20 instalado.
 - [x] SSH operativo (usuario: `kittypau`, clave SSH dedicada).
-- [ ] Copiar `bridge/` a la RPi via `scp`.
-- [ ] Ejecutar `npm install` en la RPi.
-- [ ] Crear `.env` con credenciales HiveMQ + Supabase.
-- [ ] Probar manualmente: `node bridge.js`.
-- [ ] Configurar servicio systemd (`kittypau-bridge.service`).
-- [ ] Habilitar auto-inicio: `systemctl enable kittypau-bridge`.
-- [ ] Verificar logs: `journalctl -u kittypau-bridge -f`.
+- [x] Bridge `bridge.js` copiado a `~/kittypau-bridge/`.
+- [x] `npm install` completado (56 paquetes, 0 vulnerabilidades).
+- [x] `.env` con credenciales HiveMQ + Supabase creado.
+- [x] Prueba manual exitosa: 7 dispositivos detectados (KPCL0033-0040).
+- [x] Servicio systemd creado, habilitado y corriendo (`kittypau-bridge.service`).
+- [x] Auto-inicio habilitado (`systemctl enable`).
+- [x] Logs verificados: datos fluyendo a Supabase.
+- [x] WiFi configurado: Jeivos, Casa 15, Suarez_Mujica_891.
+- [ ] Instalar Tailscale para acceso remoto desde cualquier red.
 - Ver `Docs/RASPBERRY_BRIDGE_SETUP.md` para detalles completos.
 
 ## 5) Prueba de extremo a extremo
-- [ ] ESP8266 encendido y publicando en HiveMQ.
-- [ ] Bridge en RPi recibiendo y guardando en Supabase.
-- [ ] Verificar insercion en `sensor_readings`.
-- [ ] Confirmar `devices.last_seen` actualizado.
+- [x] ESP8266 encendido y publicando en HiveMQ.
+- [x] Bridge en RPi recibiendo y guardando en Supabase.
+- [x] Verificar insercion en `sensor_readings`.
+- [x] Confirmar `devices.last_seen` actualizado.
 - [ ] Registrar dispositivo desde app con QR y asociarlo a una mascota.
 
 ## 6) Realtime (opcional)
@@ -80,4 +82,6 @@ Agregar en **Settings -> Environment Variables**:
 - [x] Firmware ESP8266 completo (MQTT/TLS, sensores, OTA, calibracion).
 - [x] Bridge `bridge.js` funcional con wildcard y auto-registro.
 - [x] RPi Zero 2 W configurada con Node.js v20 y SSH.
-- [ ] Deploy final del bridge en RPi (en progreso).
+- [x] Bridge desplegado en RPi como servicio systemd 24/7.
+- [x] 7 dispositivos detectados y escribiendo en Supabase.
+- [ ] Instalar Tailscale en RPi (acceso remoto sin estar en misma red).
