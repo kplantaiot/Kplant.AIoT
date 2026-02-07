@@ -1,5 +1,5 @@
 # Kittypau - Hitos y Pendientes
-**Ultima actualizacion:** 2026-02-07
+**Ultima actualizacion:** 2026-02-07 (v2)
 
 ---
 
@@ -26,18 +26,22 @@
 ### Documentacion
 15. [x] **Mauro_Context completo:** Arquitectura, topicos MQTT, firmware, bridge, RPi, schemas SQL, evaluacion del proyecto, checklist de deploy, estilos y flujos UX.
 
+### Schema SQL y Bridge v2.0
+16. [x] **Schema SQL unificado:** 7 tablas (profiles, breeds, pets, pet_breeds, devices, sensor_readings, system_events) con UUID como PK, RLS, triggers, vistas y datos iniciales de razas. Archivo: `SQL_UNIFICADO.sql`.
+17. [x] **Bridge v2.0:** Actualizado para schema unificado. Busca device por `device_code`, usa UUID como FK, mapea campos (weight→weight_grams, temp→temperature, hum→humidity), cache en memoria, guarda device_timestamp.
+
 ---
 
 ## Pendiente
 
 ### FASE 0 - Decisiones bloqueantes (resolver antes de programar)
-16. [ ] **Reconciliar schemas SQL:** El bridge escribe en `sensor_readings` (TEXT pk, campos: weight/temp/hum/light_*) pero la app documenta `readings` (UUID pk, campos: weight_grams/temperature/humidity). Decidir entre: (A) schema hibrido, (B) schemas separados con vista, o (C) adaptar bridge al schema de la app (recomendado). Ver `Mauro_Context/NOTA_SCHEMAS_SQL.md`.
-17. [ ] **Definir stack de la app:** Decidir entre la app existente (Vite+Express en `c:\Kittypau\1\apps\app_principal`) o construir la documentada en Mauro_Context (Next.js+Supabase+Vercel). Hay 3 arquitecturas incompatibles que deben unificarse. Ver `Mauro_Context/EVALUACION_PROYECTO.md`.
+18. [x] ~~**Reconciliar schemas SQL:**~~ Resuelto con Opcion C. Schema unificado en `SQL_UNIFICADO.sql`, bridge v2.0 adaptado.
+19. [ ] **Definir stack de la app:** Decidir entre la app existente (Vite+Express en `c:\Kittypau\1\apps\app_principal`) o construir la documentada en Mauro_Context (Next.js+Supabase+Vercel). Hay 3 arquitecturas incompatibles que deben unificarse. Ver `Mauro_Context/EVALUACION_PROYECTO.md`.
 
 ### FASE 1 - Infraestructura y base de datos
-18. [ ] **Ejecutar SQL unificado en Supabase:** Aplicar el schema definitivo segun la decision de la Fase 0. Habilitar Auth (email/password), verificar tablas y RLS.
-19. [ ] **Adaptar bridge.js:** Si se elige Opcion C, mapear campos del bridge (weight->weight_grams, temp->temperature, hum->humidity) y buscar device por device_code en vez de usarlo como PK.
-20. [ ] **Tailscale + acceso remoto RPi:** Instalar Tailscale para SSH desde cualquier red sin depender de estar en la misma WiFi. Esto tambien resuelve el problema de IP dinamica.
+20. [x] **Ejecutar SQL unificado en Supabase:** 7 tablas creadas, 26 razas cargadas, triggers, vistas y RLS activos.
+21. [x] **Deploy bridge v2.0 en RPi:** Copiado, .env actualizado con service_role key, servicio reiniciado. Sensors y Status fluyendo sin errores.
+22. [ ] **Tailscale + acceso remoto RPi:** Instalar Tailscale para SSH desde cualquier red sin depender de estar en la misma WiFi. Esto tambien resuelve el problema de IP dinamica.
 
 ### FASE 2 - App Web
 21. [ ] **Construir app web:** Conectar a Supabase para leer datos del bridge. Incluye estructura base, rutas y componentes principales.

@@ -113,10 +113,19 @@ Antes de hacer el deploy final, hay que decidir:
 
 ---
 
-## Accion requerida
-**Decidir la opcion antes de ejecutar el SQL en Supabase de produccion.**
+## RESUELTO (2026-02-07)
+
+**Se eligio Opcion C** - Schema unificado con bridge adaptado.
+
+### Lo que se hizo:
+1. **`SQL_UNIFICADO.sql`** - Schema completo con 7 tablas: profiles, breeds, pets, pet_breeds, devices, sensor_readings, system_events. Devices usa UUID como PK + device_code TEXT UNIQUE. Incluye campos IoT (wifi_status, sensor_health, light_*) y campos App (owner_id, pet_id, device_state). RLS, triggers y vistas incluidas.
+2. **`bridge/bridge.js` v2.0** - Busca device por device_code para obtener UUID, mapea weight→weight_grams, temp→temperature, hum→humidity, cache en memoria device_code→UUID.
+3. **`bridge/supabase_schema.sql`** - Deprecado, redirige a SQL_UNIFICADO.sql.
+
+### Siguiente paso:
+- Ejecutar `SQL_UNIFICADO.sql` en Supabase de produccion.
+- Deploy del bridge v2.0 en la RPi.
 
 Ver tambien:
-- `Docs/SQL_SCHEMA.sql` (Schema App)
-- `Docs/GUIA_SQL_SUPABASE.md`
-- `Docs/GUIA_MIGRACION_SQL.md`
+- `SQL_UNIFICADO.sql` (Schema definitivo)
+- `Hitos-Pendientes.md` (tracking general)
