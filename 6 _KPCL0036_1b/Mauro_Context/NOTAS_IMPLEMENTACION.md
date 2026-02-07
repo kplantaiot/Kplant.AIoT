@@ -45,6 +45,8 @@ Este documento resume los puntos criticos para implementar sin romper el contrat
 - RLS activo en todas las tablas.
 - Los endpoints CRUD requieren `Authorization: Bearer <access_token>`.
 - El webhook usa `service_role`.
+- El bridge usa `SUPABASE_KEY` (anon) para escritura directa; evaluar migrar a `service_role` si se necesitan permisos elevados.
+- MQTT usa TLS (puerto 8883) con certificado ISRG Root X1.
 
 ## 9) Eventos del sistema
 - Registrar eventos base (`pet_created`, `device_linked`, etc.).
@@ -55,6 +57,21 @@ Este documento resume los puntos criticos para implementar sin romper el contrat
 - Email existente.
 - Dispositivo ya vinculado.
 - Sesion expirada.
+
+## 11) Bridge MQTT (Raspberry Pi)
+- El bridge (`bridge/bridge.js`) corre en Raspberry Pi Zero 2 W como servicio systemd.
+- Se suscribe con wildcard (`+/SENSORS`, `+/STATUS`) para recibir datos de todos los dispositivos.
+- Auto-registra dispositivos nuevos en la tabla `devices` al recibir su primer mensaje.
+- Parsea JSON de los topics MQTT e inserta en `sensor_readings`.
+- Actualiza `devices.last_seen` y `devices.status` con cada mensaje de STATUS.
+- Credenciales en `.env` (MQTT_BROKER, MQTT_USER, MQTT_PASS, SUPABASE_URL, SUPABASE_KEY).
+- Ver `Docs/RASPBERRY_BRIDGE_SETUP.md` para configuracion completa.
+
+## 12) Firmware ESP8266
+- Codigo modular en C++ (wifi_manager, mqtt_manager, sensors, led_indicator).
+- Publica en topics `KPCLXXXX/SENSORS` (cada 10s) y `KPCLXXXX/STATUS` (cada 15s).
+- Soporta OTA, calibracion de celda de carga, y sensores DHT11 + LDR.
+- Conexion MQTT/TLS al broker HiveMQ Cloud (puerto 8883).
 
 ---
 

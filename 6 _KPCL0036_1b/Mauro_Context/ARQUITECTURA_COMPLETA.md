@@ -126,9 +126,12 @@ graph TB
     
     subgraph "HiveMQ Cloud ☁️"
         MQTT_CLOUD[HiveMQ Broker<br/>MQTT over TLS<br/>Port 8883]
-        WEBHOOK[Webhook Extension]
     end
-    
+
+    subgraph "Raspberry Pi Zero 2 W 🍓"
+        RPI_BRIDGE[Bridge Node.js<br/>bridge.js 24/7<br/>systemd service<br/>Wildcard: +/SENSORS +/STATUS]
+    end
+
     subgraph "Vercel ⚡"
         API_CLOUD[Backend API<br/>Serverless Functions<br/>/api/*]
         FRONTEND_CLOUD[Frontend React<br/>Static Hosting<br/>CDN Global]
@@ -150,9 +153,9 @@ graph TB
     ESP32_PROD2 -->|MQTT/TLS| MQTT_CLOUD
     ESP32_PROD3 -->|MQTT/TLS| MQTT_CLOUD
     
-    MQTT_CLOUD -->|Trigger| WEBHOOK
-    WEBHOOK -->|HTTPS POST| API_CLOUD
-    
+    MQTT_CLOUD -->|MQTT/TLS| RPI_BRIDGE
+    RPI_BRIDGE -->|Insert/Upsert| DB_CLOUD
+
     API_CLOUD -->|SQL Queries| DB_CLOUD
     API_CLOUD -->|Verify Token| AUTH_CLOUD
     API_CLOUD -->|Upload Files| STORAGE_CLOUD
@@ -165,6 +168,7 @@ graph TB
     MOBILE_USER -->|HTTPS| FRONTEND_CLOUD
     
     style MQTT_CLOUD fill:#6366f1
+    style RPI_BRIDGE fill:#c7254e
     style API_CLOUD fill:#000
     style FRONTEND_CLOUD fill:#000
     style DB_CLOUD fill:#3ECF8E
@@ -180,6 +184,7 @@ graph TB
 | **Storage** | Supabase | 1GB | Fotos de mascotas |
 | **Realtime** | Supabase | Incluido | WebSocket live updates |
 | **MQTT Broker** | HiveMQ Cloud | 100 conexiones | Broker MQTT SSL |
+| **Bridge MQTT** | Raspberry Pi Zero 2 W | Hardware ~$15 | MQTT -> Supabase 24/7 |
 | **Backend API** | Vercel | 100GB-hours/mes | Serverless Functions |
 | **Frontend** | Vercel | Ilimitado | Hosting estático + CDN |
 
@@ -187,46 +192,48 @@ graph TB
 
 ## 🔄 Flujo de Datos Completo
 
-### 1. Flujo de Telemetría (ESP32 → Cloud → Usuario)
+### 1. Flujo de Telemetria (ESP8266 -> RPi Bridge -> Supabase -> Usuario)
 
 ```
-┌──────────────┐
-│   ESP32      │
-│  KPCL0001    │
-└──────┬───────┘
-       │ 1. Publica cada 60s
-       │ Topic: kittypau/KPCL0001/telemetry
-       │ Payload: { temp: 23.5, humidity: 65, ... }
+┌──────────────────┐
+│  ESP8266         │
+│  KPCL0036/0037/  │
+│  0038...         │
+└──────┬───────────┘
+       │ 1. Publica cada 10s (SENSORS) y 15s (STATUS)
+       │ Topic: KPCL0038/SENSORS, KPCL0038/STATUS
+       │ Payload: { weight: 150, temp: 26.6, hum: 39, ldr: 7 }
        ▼
 ┌──────────────────────┐
 │  HiveMQ Cloud Broker │
-│  Port 8883 (SSL)     │
+│  Port 8883 (TLS)     │
 └──────┬───────────────┘
-       │ 2. Webhook trigger
-       │ POST https://tu-app.vercel.app/api/mqtt/webhook
+       │ 2. Raspberry Pi suscrita con wildcard
+       │ (+/SENSORS, +/STATUS)
        ▼
-┌─────────────────────────┐
-│  Vercel API Function    │
-│  /api/mqtt/webhook.ts   │
-│  - Valida token         │
-│  - Parsea JSON          │
-│  - Guarda en Supabase   │
-└──────┬──────────────────┘
-       │ 3. INSERT INTO sensor_readings
+┌───────────────────────────┐
+│  Raspberry Pi Zero 2 W   │
+│  bridge.js (Node.js)     │
+│  - Filtra prefijo KPCL   │
+│  - Auto-registra devices │
+│  - Parsea JSON            │
+│  - Inserta en Supabase   │
+└──────┬────────────────────┘
+       │ 3. INSERT INTO sensor_readings / UPSERT devices
        ▼
 ┌───────────────────────┐
 │  Supabase PostgreSQL  │
-│  Tabla:               │
+│  Tablas:              │
 │  sensor_readings      │
+│  devices              │
 └──────┬────────────────┘
        │ 4. Trigger Realtime
        ▼
 ┌────────────────────────┐
-│  Frontend (React)      │
+│  Frontend (Next.js)    │
 │  - Escucha Realtime    │
-│  - Actualiza gráficos  │
-│  - Muestra alerta si   │
-│    batería < 20%       │
+│  - Actualiza graficos  │
+│  - Muestra estado      │
 └────────────────────────┘
 ```
 

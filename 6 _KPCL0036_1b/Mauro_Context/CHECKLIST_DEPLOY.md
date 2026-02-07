@@ -1,8 +1,29 @@
 # Checklist de Deploy (Kittypau)
 
+## 0) ANTES DE EMPEZAR - Reconciliar schemas SQL
+
+> **IMPORTANTE**: Existen dos schemas SQL incompatibles en el proyecto.
+> NO ejecutar ningun SQL en produccion hasta resolver esto.
+>
+> - **Schema App** (`Docs/SQL_SCHEMA.sql`): tablas `devices` (UUID pk), `readings` (weight_grams, temperature, humidity). Incluye profiles, pets, breeds, RLS.
+> - **Schema Bridge** (`bridge/supabase_schema.sql`): tablas `devices` (TEXT pk = device_code), `sensor_readings` (weight, temp, hum, light_lux). Sin usuarios ni mascotas.
+>
+> **El bridge actualmente escribe en tablas con nombres y tipos distintos a los de la app.**
+>
+> Opciones:
+> - **Opcion A**: Schema hibrido (crear ambas tablas + vista de reconciliacion).
+> - **Opcion B**: Mantener separados (tablas IoT aparte de tablas App).
+> - **Opcion C (recomendada)**: Adaptar `bridge.js` para escribir en el schema App (mapear weight->weight_grams, temp->temperature, hum->humidity, buscar device por device_code en vez de usarlo como PK).
+>
+> Ver detalle completo en `Docs/NOTA_SCHEMAS_SQL.md`.
+
+- [ ] **Decidir opcion de reconciliacion de schemas (A, B o C).**
+- [ ] Implementar los cambios necesarios segun la opcion elegida.
+- [ ] Verificar que bridge.js escribe correctamente en las tablas finales.
+
 ## 1) Supabase listo
 - [ ] Proyecto creado en Supabase.
-- [ ] Ejecutar `Docs/SQL_SCHEMA.sql` en SQL Editor.
+- [ ] Ejecutar el SQL unificado (segun opcion elegida en paso 0) en SQL Editor.
 - [ ] Auth habilitado (email/password).
 - [ ] Obtener `SUPABASE_URL` y keys.
 - [ ] Crear al menos 1 dispositivo en `devices` con `device_code`.
@@ -22,22 +43,41 @@ Agregar en **Settings -> Environment Variables**:
 - [ ] Framework detectado: Next.js.
 - [ ] Deploy exitoso.
 
-## 4) Webhook en HiveMQ
-- [ ] URL: `https://TU_PROYECTO.vercel.app/api/mqtt/webhook`
-- [ ] Header: `x-webhook-token: TU_SECRETO`
-- [ ] Topic filter: `kittypau/+/telemetry`
+## 4) Bridge MQTT en Raspberry Pi
+- [x] Raspberry Pi Zero 2 W con Raspberry Pi OS Lite.
+- [x] Node.js v20 instalado.
+- [x] SSH operativo (usuario: `kittypau`, clave SSH dedicada).
+- [ ] Copiar `bridge/` a la RPi via `scp`.
+- [ ] Ejecutar `npm install` en la RPi.
+- [ ] Crear `.env` con credenciales HiveMQ + Supabase.
+- [ ] Probar manualmente: `node bridge.js`.
+- [ ] Configurar servicio systemd (`kittypau-bridge.service`).
+- [ ] Habilitar auto-inicio: `systemctl enable kittypau-bridge`.
+- [ ] Verificar logs: `journalctl -u kittypau-bridge -f`.
+- Ver `Docs/RASPBERRY_BRIDGE_SETUP.md` para detalles completos.
 
 ## 5) Prueba de extremo a extremo
-- [ ] Enviar POST de prueba al webhook.
-- [ ] Verificar insercion en `readings`.
+- [ ] ESP8266 encendido y publicando en HiveMQ.
+- [ ] Bridge en RPi recibiendo y guardando en Supabase.
+- [ ] Verificar insercion en `sensor_readings`.
 - [ ] Confirmar `devices.last_seen` actualizado.
- - [ ] Registrar dispositivo desde app con QR y asociarlo a una mascota.
+- [ ] Registrar dispositivo desde app con QR y asociarlo a una mascota.
 
 ## 6) Realtime (opcional)
 - [ ] Suscripcion activa en frontend.
 - [ ] Ver datos en vivo al insertar lecturas.
 
-## Estado local (hasta 2026-02-03)
+## 7) Webhook en HiveMQ (alternativa futura)
+- [ ] URL: `https://TU_PROYECTO.vercel.app/api/mqtt/webhook`
+- [ ] Header: `x-webhook-token: TU_SECRETO`
+- [ ] Topic filter: `+/SENSORS`
+- Nota: Solo necesario si se elimina la RPi como intermediario.
+
+## Estado (hasta 2026-02-06)
 - [x] Endpoint `/api/mqtt/webhook` creado.
 - [x] Script local `scripts/test-webhook.ps1` funciona.
 - [x] Prueba local con `success: true`.
+- [x] Firmware ESP8266 completo (MQTT/TLS, sensores, OTA, calibracion).
+- [x] Bridge `bridge.js` funcional con wildcard y auto-registro.
+- [x] RPi Zero 2 W configurada con Node.js v20 y SSH.
+- [ ] Deploy final del bridge en RPi (en progreso).

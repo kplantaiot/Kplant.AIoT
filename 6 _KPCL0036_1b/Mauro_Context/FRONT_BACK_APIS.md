@@ -4,15 +4,20 @@
 - **Frontend**: Next.js (App Router) en Vercel.
 - **Backend**: API Routes de Next.js (sin servicio extra para mantener $0).
 - **DB/Auth/Realtime**: Supabase.
-- **MQTT**: HiveMQ Cloud -> webhook a `/api/mqtt/webhook`.
+- **MQTT Broker**: HiveMQ Cloud (TLS, puerto 8883).
+- **Bridge MQTT**: Raspberry Pi Zero 2 W ejecutando `bridge.js` (Node.js) 24/7.
+- **Ruta de datos principal**: ESP8266 -> HiveMQ -> RPi Bridge -> Supabase.
+- **Webhook** (`/api/mqtt/webhook`): alternativa futura si se elimina la RPi.
 
 ## Que se despliega en Vercel
-En este proyecto, **el deploy en Vercel incluye todo**:
+En este proyecto, **Vercel incluye**:
 1. **Frontend** (UI web).
-2. **API** (`/api/*`), incluyendo el webhook de HiveMQ.
+2. **API** (`/api/*`), endpoints CRUD y webhook alternativo.
 3. **Backend ligero** (logica serverless dentro de esas rutas).
 
-No hay backend separado en otro servidor. La base de datos vive en Supabase.
+**Fuera de Vercel**:
+- **Raspberry Pi**: ejecuta `bridge.js` 24/7 como servicio systemd. Recibe datos MQTT y los escribe en Supabase.
+- **Supabase**: base de datos PostgreSQL gestionada en la nube.
 
 ## Objetivo funcional
 1. Registro e inicio de sesion.
@@ -120,9 +125,21 @@ $env:MQTT_WEBHOOK_SECRET="TU_SECRETO"
 - Evitar tareas pesadas o de larga duracion en serverless.
 - Revisar limites actuales del plan Free en la documentacion oficial antes de escalar.
 
+## Flujo de datos IoT (actual)
+```
+ESP8266 --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
+                                                                         |
+                                                                    App Web (Realtime)
+```
+- El bridge se suscribe a `+/SENSORS` y `+/STATUS` (todos los dispositivos).
+- Auto-registra dispositivos nuevos al recibir su primer mensaje.
+- Escribe en `sensor_readings` (datos) y `devices` (estado).
+- Ver `Docs/TOPICOS_MQTT.md` para detalle de payloads.
+
 ## Checklist MVP
 - [ ] Auth funcionando (Supabase)
 - [ ] CRUD mascotas
 - [ ] CRUD dispositivos
-- [ ] Webhook MQTT insertando en DB
+- [x] Bridge MQTT insertando en DB (via RPi)
 - [ ] Dashboard con Realtime
+- [ ] Reconciliar schemas SQL (ver `Docs/NOTA_SCHEMAS_SQL.md`)

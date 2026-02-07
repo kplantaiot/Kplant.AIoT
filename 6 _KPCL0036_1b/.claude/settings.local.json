@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(pio run)",
-      "Read(//e//**)"
+      "Read(//e//**)",
+      "Bash(git ls-tree:*)",
+      "Bash(scp:*)",
+      "Bash(arp:*)"
     ]
   }
 }

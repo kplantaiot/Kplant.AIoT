@@ -12,7 +12,9 @@ Tener un MVP funcional donde el usuario:
 ## Componentes
 1. **Frontend + API**: Next.js (App Router) en Vercel.
 2. **DB/Auth/Realtime**: Supabase.
-3. **MQTT**: HiveMQ Cloud.
+3. **MQTT Broker**: HiveMQ Cloud (TLS, puerto 8883).
+4. **Bridge MQTT-Supabase**: Node.js en Raspberry Pi Zero 2 W (24/7).
+5. **Firmware IoT**: ESP8266 (NodeMCU) con sensores HX711, DHT11, LDR.
 
 ---
 
@@ -21,19 +23,23 @@ Tener un MVP funcional donde el usuario:
 - Barra de progreso con 3 hitos: Usuario -> Mascota -> Dispositivo.
 - El progreso se guarda si el usuario cierra.
 
-## Diagrama de alto nivel
+## Diagrama de alto nivel (implementacion actual)
 ```
-ESP32 -> HiveMQ -> Webhook (/api/mqtt/webhook) -> Supabase (DB)
-                                          \-> Realtime -> App Web
+ESP8266 --MQTT/TLS--> HiveMQ Cloud --MQTT/TLS--> Raspberry Pi (bridge.js) --> Supabase (DB)
+                                                                                  |
+                                                                            Realtime --> App Web
 ```
 
 ---
 
 ## Flujo de datos (telemetria)
-1. ESP32 publica MQTT en HiveMQ.
-2. HiveMQ dispara webhook hacia Vercel.
-3. API valida el token y guarda lectura en Supabase.
-4. Supabase Realtime actualiza el dashboard.
+1. ESP8266 publica sensores cada 10s y status cada 15s via MQTT/TLS a HiveMQ Cloud.
+2. Raspberry Pi Zero 2 W ejecuta `bridge.js` 24/7, suscrito con wildcard (`+/SENSORS`, `+/STATUS`).
+3. Bridge parsea JSON, auto-registra dispositivos nuevos e inserta en Supabase (`sensor_readings`).
+4. Bridge actualiza estado del dispositivo en Supabase (`devices`).
+5. Supabase Realtime actualiza el dashboard del usuario.
+
+**Ventaja del bridge sobre webhook**: No requiere endpoint publico, no depende de cold starts serverless, procesa todos los dispositivos KPCL automaticamente y funciona con baja latencia.
 
 ## Registro de dispositivo (paso esencial)
 - El usuario escanea el QR en la parte inferior del plato.
@@ -43,27 +49,36 @@ ESP32 -> HiveMQ -> Webhook (/api/mqtt/webhook) -> Supabase (DB)
 ---
 
 ## Diagramas detallados
-### Local (desarrollo)
+### Produccion (implementacion actual)
 ```
-ESP32 (LAN) -> HiveMQ Cloud
-                 |
-          Webhook -> http://localhost:3000/api/mqtt/webhook
-                 |
-             Supabase (DB + Realtime)
-                 |
-             App Web (localhost:3000)
+ESP8266 (KPCL0036, KPCL0037, KPCL0038...)
+           |
+     MQTT/TLS (puerto 8883)
+           |
+     HiveMQ Cloud (broker)
+           |
+     MQTT/TLS (suscripcion wildcard)
+           |
+     Raspberry Pi Zero 2 W (bridge.js, systemd 24/7)
+           |
+     Supabase (PostgreSQL: sensor_readings + devices)
+           |
+     Supabase Realtime (WebSocket)
+           |
+     App Web (Next.js en Vercel)
 ```
 
-### Produccion (Vercel)
+### Alternativa futura (webhook directo)
 ```
-ESP32 -> HiveMQ Cloud
-           |
-     https://tu-app.vercel.app/api/mqtt/webhook
-           |
-       Supabase (DB + Realtime)
-           |
-       App Web (Vercel)
+ESP8266 -> HiveMQ Cloud
+              |
+        Webhook -> https://tu-app.vercel.app/api/mqtt/webhook
+              |
+          Supabase (DB + Realtime)
+              |
+          App Web (Vercel)
 ```
+**Nota**: El webhook es una alternativa si se quiere eliminar la Raspberry Pi, pero depende de que HiveMQ soporte webhooks en free tier y tiene limitaciones de cold start serverless.
 
 ---
 
@@ -90,9 +105,14 @@ ESP32 -> HiveMQ Cloud
    - Pros: streaming listo sin infra propia.
    - Contras: dependes del servicio; hay limites en free tier.
 
-3. **HiveMQ Webhook**:
-   - Pros: sencillo, compatible con serverless.
-   - Contras: depende de endpoint publico y token seguro.
+3. **Raspberry Pi Bridge (en lugar de HiveMQ Webhook)**:
+   - Pros: no requiere endpoint publico, baja latencia, auto-deteccion de dispositivos, 24/7.
+   - Contras: requiere hardware dedicado (RPi Zero 2 W ~$15), depende de red local.
+   - Justificacion: HiveMQ free tier no soporta webhooks nativos; el bridge es la solucion mas robusta y economica.
+
+4. **ESP8266 (en lugar de ESP32)**:
+   - Pros: mas barato, mas disponible, probado en IoT.
+   - Contras: menos RAM (80KB), solo WiFi (sin BLE).
 
 ---
 
@@ -194,19 +214,21 @@ El deploy incluye:
 
 ---
 
-## Estado actual (hasta 2026-02-03)
+## Estado actual (hasta 2026-02-06)
 - Next.js creado en `kittypau_app/` con TypeScript y App Router.
 - Endpoint webhook creado en `src/app/api/mqtt/webhook/route.ts`.
 - Cliente Supabase server creado en `src/lib/supabase/server.ts`.
-- Script de prueba creado en `scripts/test-webhook.ps1`.
-- `.env.local` creado en `kittypau_app/`.
-- Webhook local probado con exito (respuesta `success: true`).
+- Firmware ESP8266 completo con sensores HX711, DHT11, LDR, MQTT/TLS, OTA.
+- Bridge Node.js (`bridge/bridge.js`) funcional con wildcard y auto-registro.
+- Raspberry Pi Zero 2 W configurada con Node.js v20 y SSH.
+- Credenciales HiveMQ y Supabase verificadas y funcionales.
+- Ver `Docs/RASPBERRY_BRIDGE_SETUP.md` para configuracion completa de la RPi.
 
 ---
 
 ## Pendientes inmediatos
+- Completar deploy del bridge en Raspberry Pi (copiar archivos, npm install, systemd).
 - Crear y poblar `pets` y `devices` desde la app.
 - Crear UI base (login, mascotas, dispositivos, dashboard).
 - Configurar deploy en Vercel.
-- Configurar webhook en HiveMQ con URL publica.
 - Verificar Realtime en dashboard.

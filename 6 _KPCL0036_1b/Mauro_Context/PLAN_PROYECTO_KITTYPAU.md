@@ -3,21 +3,27 @@
 ## Objetivo MVP
 Un usuario se registra, agrega una mascota, registra un dispositivo (plato inteligente de comida o de agua) y ve datos en vivo desde la app web (y base lista para movil).
 
-## Estado actual del repo (2026-02-03)
+## Estado actual del repo (2026-02-06)
 - Next.js creado en `kittypau_app/` con TypeScript y App Router.
 - Archivos anteriores movidos a `kittypau_app/legacy/`.
 - `Docs/` se mantiene en la raiz para documentacion.
 - Endpoint webhook y cliente Supabase ya existen.
 - Prueba local del webhook exitosa.
+- Firmware ESP8266 completo (sensores, MQTT/TLS, OTA, calibracion).
+- Bridge Node.js (`bridge/bridge.js`) funcional con wildcard y auto-registro.
+- Raspberry Pi Zero 2 W configurada (OS, Node.js v20, SSH).
+- Deploy del bridge en RPi en progreso.
 
 ## Arquitectura propuesta (costo $0)
 1. **Frontend + API**: Next.js (Vercel Free)
 2. **DB + Auth + Realtime**: Supabase Free
-3. **MQTT**: HiveMQ Cloud Free
-4. **Flujo**:
-   - ESP32 -> HiveMQ (MQTT)
-   - HiveMQ -> Webhook -> Next.js API
-   - API guarda en Supabase
+3. **MQTT Broker**: HiveMQ Cloud Free (TLS, puerto 8883)
+4. **Bridge MQTT**: Raspberry Pi Zero 2 W con Node.js (bridge.js)
+5. **Firmware**: ESP8266 con sensores (peso, temp, humedad, luz)
+6. **Flujo**:
+   - ESP8266 -> HiveMQ Cloud (MQTT/TLS:8883)
+   - HiveMQ Cloud -> Raspberry Pi (bridge.js via wildcard subscription)
+   - Bridge parsea JSON y escribe en Supabase (sensor_readings + devices)
    - Frontend escucha Supabase Realtime
 
 ## Estructura del proyecto (propuesta)
@@ -131,12 +137,15 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 5. Crear endpoints `/api/*`.
 6. Crear UI base y flujo de onboarding.
 7. Integrar Realtime en Dashboard.
-8. Configurar HiveMQ webhook -> `/api/mqtt/webhook`.
-9. Deploy en Vercel con variables de entorno.
+8. Desplegar bridge en Raspberry Pi (copiar, npm install, systemd).
+9. Verificar flujo end-to-end (ESP8266 -> HiveMQ -> RPi -> Supabase -> App).
+10. Deploy en Vercel con variables de entorno.
 
 ## Nota sobre el deploy
-En este proyecto el deploy en **Vercel incluye frontend + API + backend ligero** (routes `/api/*`).
-No existe un backend separado: la base de datos esta en Supabase.
+- **Vercel**: frontend + API routes (`/api/*`). No hay backend separado para la web.
+- **Raspberry Pi**: ejecuta `bridge.js` 24/7 como servicio systemd. Es el unico componente on-premise.
+- **Supabase**: base de datos PostgreSQL gestionada en la nube.
+- El webhook (`/api/mqtt/webhook`) se mantiene como alternativa futura si se elimina la RPi.
 
 ## Variables de entorno (ejemplo)
 ```
@@ -157,10 +166,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ---
 
 ## Proximos pasos inmediatos
+- Finalizar deploy del bridge en Raspberry Pi (systemd 24/7).
 - Implementar login y registro en UI.
 - Implementar CRUD de mascotas y dispositivos.
 - Habilitar Realtime en dashboard.
-- Deploy en Vercel y configurar webhook HiveMQ.
+- Deploy en Vercel con variables de entorno.
+- Prueba end-to-end en produccion.
 
 ## Documento maestro de dominio
 - Ver `Docs/DOC_MAESTRO_DOMINIO.md` antes de codificar.
