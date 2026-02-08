@@ -80,10 +80,18 @@
 27. [ ] **Deploy de la app:** Vercel (si Next.js) o Railway/Render (si Express).
 28. [ ] **Prueba end-to-end en produccion:** Registrar dispositivo desde app con QR, verificar datos fluyendo desde ESP8266 hasta dashboard.
 
+### FASE 4 - Administracion y planes de usuario
+29. [ ] **Sistema de roles y planes:** Definir niveles de acceso (Basic, Premium, Diamante). Agregar columna `plan` a `profiles`. Implementar middleware/RLS que limite funcionalidades segun plan.
+    - **Basic (gratis):** 1 mascota, 1 dispositivo, dashboard basico (/today), historial 7 dias.
+    - **Premium:** Multiples mascotas y dispositivos, historial 30 dias, /story, alertas por email.
+    - **Diamante:** Todo Premium + historial ilimitado, exportacion de datos, alertas push/WhatsApp, soporte prioritario.
+30. [ ] **Admin panel:** Vista para administrar usuarios, cambiar planes, ver metricas de uso. Protegida con rol `admin` en profiles.
+31. [ ] **Limites y validaciones por plan:** Bloquear creacion de mascotas/dispositivos si excede el limite del plan. Mostrar CTA de upgrade cuando se alcanza el limite.
+
 ### Mejoras futuras
-29. [ ] **Buffer local en bridge:** SQLite o JSON para datos que fallen al escribir en Supabase, con reintento automatico.
-30. [ ] **Alertas de caida:** Notificacion (email/push) si el bridge deja de funcionar o un dispositivo deja de reportar.
-31. [ ] **Webhook HiveMQ (alternativa futura):** URL con header x-webhook-token y topic filter +/SENSORS como alternativa o complemento al bridge.
+32. [ ] **Buffer local en bridge:** SQLite o JSON para datos que fallen al escribir en Supabase, con reintento automatico.
+33. [ ] **Alertas de caida:** Notificacion (email/push) si el bridge deja de funcionar o un dispositivo deja de reportar.
+34. [ ] **Webhook HiveMQ (alternativa futura):** URL con header x-webhook-token y topic filter +/SENSORS como alternativa o complemento al bridge.
 
 ---
 
