@@ -31,6 +31,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - phone_number (si incluye WhatsApp)
 - city
 - country
+- user_onboarding_step
 
 **Modelo de datos final (users/profiles)**
 - id
@@ -44,6 +45,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - notification_channel
 - city
 - country
+- user_onboarding_step
 - created_at
 
 **Origen**: flujo de registro visual.
@@ -86,6 +88,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - has_health_condition
 - health_notes
 - photo_url
+- pet_onboarding_step
 - created_at
 
 **Modelo de datos final (breeds)**
@@ -111,16 +114,17 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 
 **Paso esencial**
 - Escaneo de QR en la parte inferior del plato.
-- El QR entrega el `device_code`.
+- El QR entrega el `device_id`.
 - El dispositivo se asocia a una mascota para activar envio de datos.
 
-**Datos minimos**
+**Datos m�nimos**
 - id
 - owner_id (usuario)
-- pet_id (opcional)
-- device_code (ej: KPCL0001)
+- pet_id (obligatorio)
+- device_id (ej: KPCL0001)
 - tipo (food_bowl / water_bowl)
-- estado (active / inactive)
+- estado (active / inactive / maintenance)
+- device_state (factory / claimed / linked / offline / lost / error)
 - bateria (opcional)
 - last_seen
 - fecha de creacion
@@ -128,12 +132,13 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 **Origen**: formulario "Registro de Kittypau".
 
 ### D. Lecturas (streaming)
-**Datos minimos**
+**Datos m�nimos**
 - id
 - device_id
 - pet_id (opcional)
 - weight_grams (si es plato comida)
 - water_ml (si es plato agua)
+- flow_rate (opcional)
 - temperature (opcional)
 - humidity (opcional)
 - battery_level (opcional)
@@ -179,7 +184,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 
 ### Registro de Kittypau
 - device_type (food_bowl / water_bowl)
-- device_code
+- device_id
 - asignar mascota (opcional)
 - escanear QR (obligatorio)
 
@@ -188,16 +193,16 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 ## Paso 3: Definir relaciones
 1. Usuario **1:N** Mascotas
 2. Usuario **1:N** Dispositivos
-3. Mascota **1:N** Dispositivos (opcional)
+3. Mascota **1:N** Dispositivos (obligatorio)
 4. Dispositivo **1:N** Lecturas
 
 ---
 
 ## Paso 4: Definir reglas de negocio (constraints)
-1. `device_code` debe ser unico.
+1. `device_id` debe ser unico.
 2. Un usuario solo puede ver/editar su data.
 3. Lecturas solo se insertan via webhook autenticado.
-4. Dispositivo puede no estar asignado a mascota al inicio.
+4. Dispositivo debe estar asignado a mascota.
 
 ---
 
@@ -221,6 +226,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - `notification_channel` text
 - `city` text
 - `country` text
+- `user_onboarding_step` text
 - `created_at` timestamp
 
 ### `pets`
@@ -241,6 +247,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - `has_health_condition` boolean
 - `health_notes` text
 - `photo_url` text
+- `pet_onboarding_step` text
 - `created_at` timestamp
 
 ### `breeds`
@@ -258,7 +265,8 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - `id` uuid PK
 - `owner_id` uuid FK -> profiles.id
 - `pet_id` uuid FK -> pets.id (nullable)
-- `device_code` text UNIQUE
+- `pet_id` uuid FK -> pets.id (not null)
+- `device_id` text UNIQUE
 - `device_type` text
 - `status` text
 - `battery_level` int
@@ -273,6 +281,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - `water_ml` int
 - `temperature` numeric
 - `humidity` numeric
+- `flow_rate` numeric
 - `battery_level` int
 - `recorded_at` timestamp (default now())
 
@@ -284,7 +293,7 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 - API server puede insertar lecturas con service role.
 
 ### Ejemplo de politicas
-- `pets`: `owner_id = auth.uid()`
+- `pets`: `user_id = auth.uid()`
 - `devices`: `owner_id = auth.uid()`
 - `readings`: join por `devices.owner_id = auth.uid()`
 
@@ -301,3 +310,4 @@ Antes de escribir codigo, definimos **datos, formularios, relaciones, reglas y e
 
 ## Proximo paso
 Cuando confirmes este plan, generamos el **script SQL final** y lo guardamos en `Docs/SQL_SCHEMA.sql` antes de tocar codigo.
+

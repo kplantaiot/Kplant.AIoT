@@ -1,26 +1,22 @@
-# Frontend, Backend y APIs (MVP Kittypau)
+﻿# Frontend, Backend y APIs (MVP Kittypau)
 
-## Decision tecnica
+## Decisión técnica
 - **Frontend**: Next.js (App Router) en Vercel.
 - **Backend**: API Routes de Next.js (sin servicio extra para mantener $0).
 - **DB/Auth/Realtime**: Supabase.
-- **MQTT Broker**: HiveMQ Cloud (TLS, puerto 8883).
-- **Bridge MQTT**: Raspberry Pi Zero 2 W ejecutando `bridge.js` (Node.js) 24/7.
-- **Ruta de datos principal**: ESP8266 -> HiveMQ -> RPi Bridge -> Supabase.
-- **Webhook** (`/api/mqtt/webhook`): alternativa futura si se elimina la RPi.
+- **MQTT**: HiveMQ Cloud -> webhook a `/api/mqtt/webhook`.
+- **Bridge**: Raspberry Pi Zero 2 W (porque HiveMQ Free no ofrece webhooks).
 
 ## Que se despliega en Vercel
-En este proyecto, **Vercel incluye**:
+En este proyecto, **el deploy en Vercel incluye todo**:
 1. **Frontend** (UI web).
-2. **API** (`/api/*`), endpoints CRUD y webhook alternativo.
-3. **Backend ligero** (logica serverless dentro de esas rutas).
+2. **API** (`/api/*`), incluyendo el webhook de HiveMQ.
+3. **Backend ligero** (lógica serverless dentro de esas rutas).
 
-**Fuera de Vercel**:
-- **Raspberry Pi**: ejecuta `bridge.js` 24/7 como servicio systemd. Recibe datos MQTT y los escribe en Supabase.
-- **Supabase**: base de datos PostgreSQL gestionada en la nube.
+No hay backend separado en otro servidor. La base de datos vive en Supabase.
 
 ## Objetivo funcional
-1. Registro e inicio de sesion.
+1. Registro e inicio de sesión.
 2. Crear mascota.
 3. Registrar dispositivo (plato comida/agua) con QR.
 4. Ver datos en vivo (streaming) en la app.
@@ -47,27 +43,58 @@ src/app/
     readings/
 ```
 
-## Endpoints minimos (API Routes)
+## Endpoints mínimos (API Routes)
 1. `POST /api/mqtt/webhook`
    - Recibe datos desde HiveMQ.
    - Valida `x-webhook-token`.
    - Inserta lectura y actualiza `devices`.
-   - Busca el dispositivo por `device_code`.
+   - Busca el dispositivo por `device_id`.
 
-2. `GET/POST /api/pets`
+2. `GET/PUT /api/profiles`
+   - Lee/actualiza perfil del usuario.
+   - Campos soportados: `auth_provider`, `user_name`, `is_owner`, `owner_name`,
+     `care_rating`, `phone_number`, `notification_channel`, `city`, `country`,
+     `user_onboarding_step`.
+
+3. `GET/POST /api/pets`
    - Lista mascotas del usuario.
    - Crea nueva mascota.
+   - Campos extra: `pet_state`, `pet_onboarding_step`.
 
-3. `GET/POST /api/devices`
+4. `PATCH /api/pets/:id`
+   - Actualiza datos de mascota.
+   - Requiere `Authorization: Bearer <access_token>`.
+
+5. `GET/POST /api/devices`
    - Lista dispositivos.
    - Registra y asigna dispositivo a mascota.
-   - `device_code` se obtiene del QR del plato.
+   - `device_id` se obtiene del QR del plato.
+   - Al crear dispositivo, actualiza `pet_state` a `device_linked`.
+   - Internamente usa RPC `link_device_to_pet` (operacion atomica).
 
-4. `GET /api/readings?device_id=...`
-   - Lecturas recientes para graficos.
+6. `GET /api/readings?device_id=...`
+   - Lecturas recientes para gráficos.
+
+7. `GET /api/onboarding/status`
+   - Resumen de onboarding para UI.
+   - Retorna: `userStep`, `hasPet`, `hasDevice`, `petCount`, `deviceCount`.
+
+8. `PATCH /api/devices/:id`
+   - Actualiza estado del dispositivo o re-vincula mascota.
+   - Requiere `Authorization: Bearer <access_token>`.
+
+Payload propuesto:
+```json
+{
+  "status": "maintenance",
+  "device_state": "offline",
+  "device_type": "food_bowl",
+  "pet_id": "uuid-opcional"
+}
+```
 
 ## Autenticacion para CRUD
-Los endpoints `/api/pets`, `/api/devices` y `/api/readings` requieren:
+Los endpoints `/api/profiles`, `/api/pets`, `/api/devices` y `/api/readings` requieren:
 ```
 Authorization: Bearer <access_token>
 ```
@@ -91,9 +118,15 @@ Ejemplo:
   "humidity": 65,
   "weight_grams": 3500,
   "battery_level": 85,
+  "flow_rate": 120,
   "timestamp": "2026-02-03T18:30:00Z"
 }
 ```
+Notas:
+- La API acepta `deviceId`, `deviceId` o `device_id`.
+- El `device_id` es el codigo humano (KPCLxxxx).
+- Si se envía `deviceId` (UUID), se busca por `devices.id`.
+- Los campos numéricos pueden llegar como string y se normalizan.
 
 ## Endpoint de prueba (local)
 1. Arranca el servidor:
@@ -120,26 +153,85 @@ $env:MQTT_WEBHOOK_SECRET="TU_SECRETO"
 - Suscribirse por `device_id` en el dashboard.
 - Fallback: polling cada X segundos si Realtime falla.
 
-## Notas sobre Vercel Free
-- Mantener el API liviano (validacion y escritura en DB).
-- Evitar tareas pesadas o de larga duracion en serverless.
-- Revisar limites actuales del plan Free en la documentacion oficial antes de escalar.
+## Auditoria
+- Tabla `audit_events` (server-only).
+- Eventos actuales: `profile_created`, `profile_updated`, `pet_created`, `device_created`, `reading_ingested`.
 
-## Flujo de datos IoT (actual)
-```
-ESP8266 --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
-                                                                         |
-                                                                    App Web (Realtime)
-```
-- El bridge se suscribe a `+/SENSORS` y `+/STATUS` (todos los dispositivos).
-- Auto-registra dispositivos nuevos al recibir su primer mensaje.
-- Escribe en `sensor_readings` (datos) y `devices` (estado).
-- Ver `Docs/TOPICOS_MQTT.md` para detalle de payloads.
+## Notas sobre Vercel Free
+- Mantener el API liviano (validación y escritura en DB).
+- Evitar tareas pesadas o de larga duración en serverless.
+- Revisar limites actuales del plan Free en la documentación oficial antes de escalar.
 
 ## Checklist MVP
 - [ ] Auth funcionando (Supabase)
 - [ ] CRUD mascotas
 - [ ] CRUD dispositivos
-- [x] Bridge MQTT insertando en DB (via RPi)
+- [ ] Webhook MQTT insertando en DB
 - [ ] Dashboard con Realtime
-- [ ] Reconciliar schemas SQL (ver `Docs/NOTA_SCHEMAS_SQL.md`)
+
+## Contrato de errores (resumen)
+Reglas comunes:
+- 401 si falta o es invalido Authorization (o x-webhook-token).
+- 403 si el recurso no pertenece al usuario.
+- 404 si el recurso no existe.
+- 400 si payload es invalido o falla una validacion.
+- 500 si Supabase o servidor fallan.
+- 429 si supera rate limit.
+- 413 si payload supera el limite permitido.
+
+Formato estandar:
+```json
+{
+  "error": "Mensaje",
+  "code": "CODIGO_ERROR",
+  "request_id": "uuid",
+  "details": "opcional"
+}
+```
+
+Rate limits actuales (best effort):
+- `/api/mqtt/webhook`: 60 req/min por IP.
+- Mutaciones (`PUT /api/profiles`, `POST/PATCH /api/pets`, `POST/PATCH /api/devices`): 30 req/min por usuario.
+
+Limites de payload:
+- Mutaciones JSON: ~8 KB.
+- Webhook MQTT: ~10 KB.
+
+Rangos validados (server):
+- `weight_kg`: 0–50
+- `battery_level`: 0–100
+- `readings?limit`: 1–200
+
+Errores por endpoint:
+1. GET /api/devices
+   - 401 si falta token.
+2. POST /api/devices
+   - 400 device_id, device_type, and pet_id are required
+   - 400 device_id must match KPCL0000 format
+   - 400 Invalid device_type
+   - 400 Invalid status
+   - 404 Pet not found
+   - 401 si falta token.
+3. PATCH /api/devices/:id
+   - 400 Invalid status | Invalid device_state | Invalid device_type | No fields to update
+   - 403 Forbidden
+   - 404 Device not found
+4. POST /api/mqtt/webhook
+   - 401 Unauthorized
+   - 400 Invalid JSON | Missing device code | device_id must match KPCL0000 format | <campo> out of range
+   - 404 Device not found
+5. PATCH /api/pets/:id
+   - 400 Invalid type | Invalid pet_state | Invalid pet_onboarding_step | weight_kg must be a number | No fields to update
+   - 403 Forbidden
+   - 404 Pet not found
+6. POST /api/pets
+   - 400 name and type are required
+   - 400 Invalid type
+   - 400 Invalid pet_state
+   - 400 Invalid pet_onboarding_step
+   - 400 weight_kg must be a number
+   - 401 si falta token.
+## Nota sobre validaciones
+Los enums de `origin`, `living_environment`, `size`, `activity_level`, `age_range`, `alone_time` se validan en frontend/backend.
+El SQL actual solo impone constraints en `type` y `pet_state` para `pets`.
+

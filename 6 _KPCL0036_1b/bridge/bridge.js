@@ -2,7 +2,7 @@
  * Kittypau Bridge v2.1 - MQTT to Supabase (Schema Unificado)
  * Escucha mensajes MQTT de los dispositivos y los almacena en Supabase
  *
- * v2.1: sensor_readings usa device_code directamente como FK
+ * v2.1: sensor_readings usa device_id (TEXT) directamente como FK
  *       Sin cache UUID, sin lookups — escribe KPCL0039 directo
  * v2.0: Mapeo de campos: weight→weight_grams, temp→temperature, hum→humidity
  */
@@ -23,7 +23,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
 );
 
-// Set de device_codes ya registrados (evita queries repetidos)
+// Set de device_ids ya registrados (evita queries repetidos)
 const knownDevices = new Set();
 
 // ============ MQTT ============
@@ -73,9 +73,9 @@ mqttClient.on('message', async (topic, message) => {
   const timestamp = new Date().toLocaleTimeString();
 
   try {
-    const [deviceCode, type] = topic.split('/');
+    const [deviceId, type] = topic.split('/');
 
-    if (USE_WILDCARD && DEVICE_PREFIX && !deviceCode.startsWith(DEVICE_PREFIX)) {
+    if (USE_WILDCARD && DEVICE_PREFIX && !deviceId.startsWith(DEVICE_PREFIX)) {
       return;
     }
 
@@ -85,12 +85,12 @@ mqttClient.on('message', async (topic, message) => {
     console.log(JSON.stringify(data, null, 2));
 
     // Auto-registrar dispositivo si es la primera vez que lo vemos
-    await ensureDeviceExists(deviceCode);
+    await ensureDeviceExists(deviceId);
 
     if (type === 'SENSORS') {
-      await handleSensorData(deviceCode, data);
+      await handleSensorData(deviceId, data);
     } else if (type === 'STATUS') {
-      await handleStatusData(deviceCode, data);
+      await handleStatusData(deviceId, data);
     }
   } catch (err) {
     console.error(`[ERROR] Procesando mensaje: ${err.message}`);
@@ -116,17 +116,17 @@ mqttClient.on('reconnect', () => {
  * Si no existe, lo crea con estado 'factory'.
  * Usa un Set en memoria para no repetir queries.
  */
-async function ensureDeviceExists(deviceCode) {
-  if (knownDevices.has(deviceCode)) return;
+async function ensureDeviceExists(deviceId) {
+  if (knownDevices.has(deviceId)) return;
 
   const { data } = await supabase
     .from('devices')
-    .select('device_code')
-    .eq('device_code', deviceCode)
+    .select('device_id')
+    .eq('device_id', deviceId)
     .single();
 
   if (data) {
-    knownDevices.add(deviceCode);
+    knownDevices.add(deviceId);
     return;
   }
 
@@ -134,26 +134,26 @@ async function ensureDeviceExists(deviceCode) {
   const { error } = await supabase
     .from('devices')
     .insert({
-      device_code: deviceCode,
+      device_id: deviceId,
       device_state: 'factory',
       last_seen: new Date().toISOString()
     });
 
   if (error) {
-    console.error(`[SUPABASE] Error auto-registrando ${deviceCode}: ${error.message}`);
+    console.error(`[SUPABASE] Error auto-registrando ${deviceId}: ${error.message}`);
   } else {
-    console.log(`[SUPABASE] + Dispositivo ${deviceCode} auto-registrado (factory)`);
-    knownDevices.add(deviceCode);
+    console.log(`[SUPABASE] + Dispositivo ${deviceId} auto-registrado (factory)`);
+    knownDevices.add(deviceId);
   }
 }
 
 // ============ HANDLERS ============
 
-async function handleSensorData(deviceCode, data) {
+async function handleSensorData(deviceId, data) {
   const { error } = await supabase
     .from('sensor_readings')
     .insert({
-      device_code: deviceCode,
+      device_id: deviceId,
       weight_grams: data.weight ?? null,
       temperature: data.temp ?? null,
       humidity: data.hum ?? null,
@@ -166,12 +166,12 @@ async function handleSensorData(deviceCode, data) {
   if (error) {
     console.error(`[SUPABASE] Error insertando sensor: ${error.message}`);
   } else {
-    console.log(`[SUPABASE] ✓ Sensor data guardado para ${deviceCode}`);
+    console.log(`[SUPABASE] ✓ Sensor data guardado para ${deviceId}`);
   }
 }
 
-async function handleStatusData(deviceCode, data) {
-  // Actualiza campos IoT directamente por device_code (sin UUID)
+async function handleStatusData(deviceId, data) {
+  // Actualiza campos IoT directamente por device_id (sin UUID)
   const { error } = await supabase
     .from('devices')
     .update({
@@ -179,15 +179,16 @@ async function handleStatusData(deviceCode, data) {
       wifi_status: data.wifi_status ?? null,
       wifi_ssid: data.wifi_ssid ?? null,
       wifi_ip: data.wifi_ip ?? null,
-      sensor_health: data.sensor_health ?? null
+      sensor_health: data.sensor_health ?? null,
+      device_type: data.device_type ?? null
     })
-    .eq('device_code', deviceCode);
+    .eq('device_id', deviceId);
 
   if (error) {
     console.error(`[SUPABASE] Error actualizando device: ${error.message}`);
   } else {
-    const mqttStatus = data[deviceCode] || 'Unknown';
-    console.log(`[SUPABASE] ✓ Status actualizado para ${deviceCode} (${mqttStatus})`);
+    const mqttStatus = data[deviceId] || 'Unknown';
+    console.log(`[SUPABASE] ✓ Status actualizado para ${deviceId} (${mqttStatus})`);
   }
 }
 

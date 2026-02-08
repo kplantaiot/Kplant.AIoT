@@ -5,7 +5,9 @@
       "Read(//e//**)",
       "Bash(git ls-tree:*)",
       "Bash(scp:*)",
-      "Bash(arp:*)"
+      "Bash(arp:*)",
+      "Bash(ping:*)",
+      "Bash(dir:*)"
     ]
   }
 }

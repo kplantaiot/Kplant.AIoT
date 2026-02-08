@@ -1,22 +1,40 @@
 -- ============================================================
--- MIGRACION V2: sensor_readings usa device_id (TEXT) como FK
+-- MIGRACION V2: device_id (TEXT) como PRIMARY KEY de devices
+-- + sensor_readings usa device_id como FK directa
 -- + Renombrar devices.device_code → device_id
 -- Fecha: 2026-02-07
 --
--- Ejecutar en Supabase SQL Editor
+-- Ejecutar en Supabase SQL Editor (todo de una vez)
 -- ============================================================
 
--- 1. Eliminar dependencias de sensor_readings
+-- 1. Eliminar dependencias de sensor_readings y devices
 DROP POLICY IF EXISTS readings_select ON sensor_readings;
+DROP POLICY IF EXISTS devices_select ON devices;
+DROP POLICY IF EXISTS devices_update ON devices;
+DROP POLICY IF EXISTS devices_delete ON devices;
 DROP TRIGGER IF EXISTS trg_reading_updates_device ON sensor_readings;
+DROP TRIGGER IF EXISTS trg_devices_updated_at ON devices;
 DROP VIEW IF EXISTS device_summary CASCADE;
 DROP VIEW IF EXISTS latest_readings CASCADE;
 DROP TABLE IF EXISTS sensor_readings CASCADE;
 
 -- 2. Renombrar device_code → device_id en devices
-ALTER TABLE devices RENAME COLUMN device_code TO device_id;
+-- YA EJECUTADO: ALTER TABLE devices RENAME COLUMN device_code TO device_id;
 
--- 3. Recrear sensor_readings con device_id TEXT como FK
+-- 3. Cambiar PK de devices: id UUID → device_id TEXT
+ALTER TABLE devices DROP CONSTRAINT IF EXISTS devices_pkey;
+ALTER TABLE devices ADD PRIMARY KEY (device_id);
+
+-- id UUID se mantiene como identificador interno (UNIQUE, no PK)
+ALTER TABLE devices ALTER COLUMN id SET DEFAULT gen_random_uuid();
+ALTER TABLE devices DROP CONSTRAINT IF EXISTS devices_id_unique;
+ALTER TABLE devices ADD CONSTRAINT devices_id_unique UNIQUE (id);
+
+-- Eliminar indice viejo de device_code/device_id (ya no es necesario, es PK)
+DROP INDEX IF EXISTS idx_devices_device_code;
+DROP INDEX IF EXISTS idx_devices_device_id;
+
+-- 4. Recrear sensor_readings con device_id TEXT como FK
 CREATE TABLE sensor_readings (
   id BIGSERIAL PRIMARY KEY,
   device_id TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
@@ -37,7 +55,7 @@ CREATE INDEX idx_readings_device_id ON sensor_readings(device_id);
 CREATE INDEX idx_readings_recorded_at ON sensor_readings(recorded_at DESC);
 CREATE INDEX idx_readings_device_time ON sensor_readings(device_id, recorded_at DESC);
 
--- 4. Recrear trigger (usa device_id)
+-- 5. Recrear trigger update_device_last_seen (usa device_id)
 CREATE OR REPLACE FUNCTION update_device_last_seen()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -54,7 +72,12 @@ CREATE TRIGGER trg_reading_updates_device
   FOR EACH ROW
   EXECUTE FUNCTION update_device_last_seen();
 
--- 5. Recrear vistas
+-- Recrear trigger updated_at en devices
+CREATE TRIGGER trg_devices_updated_at
+  BEFORE UPDATE ON devices
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- 6. Recrear vistas
 CREATE OR REPLACE VIEW latest_readings AS
 SELECT DISTINCT ON (sr.device_id)
   sr.device_id,
@@ -91,7 +114,7 @@ FROM devices d
 LEFT JOIN pets p ON p.id = d.pet_id
 LEFT JOIN latest_readings lr ON lr.device_id = d.device_id;
 
--- 6. Recrear RLS
+-- 7. Recrear RLS y policies
 ALTER TABLE sensor_readings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY readings_select ON sensor_readings FOR SELECT
@@ -100,3 +123,8 @@ CREATE POLICY readings_select ON sensor_readings FOR SELECT
     WHERE devices.device_id = sensor_readings.device_id
     AND (devices.owner_id = auth.uid() OR devices.owner_id IS NULL)
   ));
+
+CREATE POLICY devices_select ON devices FOR SELECT
+  USING (owner_id IS NULL OR auth.uid() = owner_id);
+CREATE POLICY devices_update ON devices FOR UPDATE USING (auth.uid() = owner_id);
+CREATE POLICY devices_delete ON devices FOR DELETE USING (auth.uid() = owner_id);

@@ -201,13 +201,13 @@ Login -> Dashboard
 - Estados (`pet_state`, `device_state`) bien definidos.
 
 **Problemas**:
-1. El flujo QR -> `device_code` -> activacion es correcto en teoria, pero **el firmware no conoce `device_code` del QR**. El `DEVICE_ID` se hardcodea en `config.h`. No hay mecanismo para que el usuario "reclame" un dispositivo desde la app y que este empiece a enviar datos "para el".
-2. El bridge auto-registra dispositivos (sin owner). El flujo de "vincular dispositivo" asume que el dispositivo ya existe en la DB con un `device_code`. **Hay que definir: quien crea el dispositivo primero?**
+1. El flujo QR -> `device_id` -> activacion es correcto en teoria, pero **el firmware no conoce `device_id` del QR**. El `DEVICE_ID` se hardcodea en `config.h`. No hay mecanismo para que el usuario "reclame" un dispositivo desde la app y que este empiece a enviar datos "para el".
+2. El bridge auto-registra dispositivos (sin owner). El flujo de "vincular dispositivo" asume que el dispositivo ya existe en la DB con un `device_id`. **Hay que definir: quien crea el dispositivo primero?**
    - Opcion A: El bridge lo crea (auto-registro al recibir primer mensaje). Luego el usuario lo "reclama" via QR.
    - Opcion B: El usuario lo crea via QR. El bridge lo actualiza cuando llegan datos.
 
 ### Recomendacion
-Usar **Opcion A**: el bridge auto-registra con estado `factory`. El usuario escanea QR, el backend busca por `device_code`, lo marca como `claimed` y lo asocia al usuario/mascota. El bridge continua escribiendo datos normalmente.
+Usar **Opcion A**: el bridge auto-registra con estado `factory`. El usuario escanea QR, el backend busca por `device_id`, lo marca como `claimed` y lo asocia al usuario/mascota. El bridge continua escribiendo datos normalmente.
 
 ---
 

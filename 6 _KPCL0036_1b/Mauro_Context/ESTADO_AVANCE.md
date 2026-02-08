@@ -1,66 +1,93 @@
-# Estado del Proyecto y Proximos Pasos (2026-02-06)
+﻿# Estado del Proyecto y Proximos Pasos (2026-02-07)
 
 ## Resumen de avance
-- Proyecto Next.js creado en `kittypau_app/` (TypeScript + App Router).
-- Endpoint webhook listo: `src/app/api/mqtt/webhook/route.ts`.
-- Cliente Supabase server listo: `src/lib/supabase/server.ts`.
-- `.env.local` creado en `kittypau_app/`.
-- SQL base generado en `Docs/SQL_SCHEMA.sql`.
-- Firmware ESP8266 completo y funcional (sensores, MQTT/TLS, OTA, calibracion).
-- Bridge Node.js (`bridge/bridge.js`) listo con wildcard y auto-registro.
-- Raspberry Pi Zero 2 W configurada: OS instalado, Node.js v20, SSH operativo.
-- Credenciales HiveMQ Cloud y Supabase verificadas.
+- Proyecto Next.js en `kittypau_app/` (TypeScript + App Router) desplegado en Vercel.
+- Endpoints API listos: `/api/pets`, `/api/devices`, `/api/readings`, `/api/mqtt/webhook`.
+- Esquema SQL actualizado en `Docs/SQL_SCHEMA.sql` con:
+  - `devices.pet_id` obligatorio
+  - `flow_rate` en `readings`
+  - nuevos estados en `pet_state`, `device_state`, `status`
+  - trigger `update_device_from_reading`
+- Pruebas E2E completas y documentadas en `Docs/PRUEBAS_E2E.md`.
+- Documentacion de login parallax cerrada en `Docs/IMAGENES_LOGIN.md`.
 
 ## Lo que ya funciona
-1. ESP8266 publica sensores (peso, temp, humedad, luz) cada 10s y status cada 15s via MQTT/TLS.
-2. HiveMQ Cloud recibe y retransmite mensajes de todos los dispositivos KPCL.
-3. Bridge (`bridge.js`) se conecta a HiveMQ, parsea mensajes y escribe en Supabase.
-4. Supabase almacena lecturas en `sensor_readings` y estado en `devices`.
-5. Raspberry Pi Zero 2 W operativa con SSH y Node.js v20.
-6. Webhook local probado con exito (via script `test-webhook.ps1`).
+1. Webhook recibe datos y guarda en Supabase (produccion).
+2. CRUD de `pets` y `devices` funcionando con Auth.
+3. Lecturas (`readings`) consultables por `device_id`.
+4. Trigger actualiza `devices.last_seen` y `battery_level`.
 
-## En progreso
-1. Completar deploy del bridge en Raspberry Pi (copiar archivos, npm install, configurar systemd).
-   - Ver `Docs/RASPBERRY_BRIDGE_SETUP.md` para configuracion completa.
+## Pendiente inmediato (implementacion)
+1. Aplicar Design Tokens + componentes base (Button, Card, Input).
+2. Realtime en dashboard (suscripcion a readings).
+3. Pop-up de registro con progreso (Usuario -> Mascota -> Dispositivo).
+4. Bridge en Raspberry como servicio 24/7 (systemd + auto-restart).
 
-## Pendiente inmediato
-1. Finalizar servicio systemd del bridge en la RPi (24/7).
-2. Crear UI base (login, mascotas, dispositivos, dashboard).
-3. Implementar CRUD de mascotas y dispositivos.
-4. Activar Realtime en dashboard.
-5. Definir y construir pop-up de registro con progreso (Usuario -> Mascota -> Dispositivo).
+## Arquitectura de pruebas (E2E)
+- Vercel API en produccion: OK
+- Supabase guardando lecturas: OK
+- Raspberry Bridge: pendiente de validar 24/7 (systemd)
 
 ## Pendiente de infraestructura
-1. Deploy en Vercel (frontend + API routes).
-2. Configurar variables en Vercel.
-3. Probar end-to-end en produccion (ESP8266 -> HiveMQ -> RPi Bridge -> Supabase -> App Web).
+1. Validar servicio systemd del bridge.
+2. Configurar alertas / watchdog en Raspberry.
+3. Nota: Bridge 24/7 queda fuera del alcance actual.
 
-## Hitos completados del firmware ESP8266
-1. Conectividad WiFi con gestion de multiples redes (LittleFS).
-2. Indicador LED para busqueda/reconexion WiFi (3 blinks).
-3. Sincronizacion NTP para timestamps precisos.
-4. Conexion MQTT/TLS con certificado ISRG Root X1 (HiveMQ Cloud).
-5. Backoff exponencial para reconexion MQTT (5s-60s).
-6. Indicador LED para eventos MQTT (1 blink = publish, 2 = subscribe).
-7. Publicacion periodica de SENSORS (10s) y STATUS (15s).
-8. Calibracion del sensor de peso via MQTT + persistencia en LittleFS.
-9. Gestion dinamica de WiFi via MQTT (ADDWIFI/REMOVEWIFI).
-10. Estado Online/Offline con debounce de 15 segundos (grace period).
-11. Refactorizacion modular completa (wifi, mqtt, sensors, led desacoplados).
-12. Actualizaciones OTA via ArduinoOTA.
-13. Filtro deadband de 2g para estabilidad del peso.
-14. Verificacion de heap (>20KB) antes de TLS.
-- Ver `Docs/FIRMWARE_ESP8266.md` para detalles completos.
+## Implementado hoy
+- Backend hardening v1 completo (errores, rate limit, validaciones, auditoria, RPC, indices, cleanup).
+- Documentacion CLI completada (Vercel, Supabase, HiveMQ, Raspberry) con ejemplos.
+- Tests post-migracion OK (2026-02-08): DB/API KPCL0159 + onboarding KPCL0208.
+- Errores API estandarizados con `code` y `request_id`.
+- Rate limiting basico aplicado (webhook y endpoints mutables).
+- Limites de payload y rangos validados (weight_kg, battery_level, readings limit).
+- Auditoria basica agregada (tabla `audit_events` + inserciones).
+- RPC `link_device_to_pet` agregado para alta atomica de device + pet_state.
+- Indices compuestos agregados para consultas frecuentes (pets/devices/readings).
+- Script de cleanup/backfill agregado (`Docs/CLEANUP_SQL.sql`).
+- Vercel CLI: `vercel link --yes` ejecutado. Vinculado a `kittypaus-projects/kittypau_2026_hivemq` y descargadas envs (sobrescribe `.env.local` local).
+- Onboarding backend test OK (2026-02-08): pet `55a0bb9e-2084-4131-9ef9-aaf5327bd08e`, device `e986136d-dd58-43d7-bafc-71406c1810a0` (KPCL0407).
+- GET /api/onboarding/status OK (2026-02-08): userStep `pet_profile`, petCount `4`, deviceCount `6`.
+- Archivo local de entorno de pruebas creado (Docs/.env.test.local, no versionado).
+- Endpoint onboarding status (`GET /api/onboarding/status`) listo.
+- Normalizacion de strings en PATCH /api/pets/:id.
+- POST /api/devices ahora revierte si falla update de pet_state.
+- Webhook validado con deviceId (UUID) y valores string normalizados.
+- Test onboarding backend OK (profiles -> pets -> devices) via TEST_ONBOARDING_BACKEND.ps1.
+- Test inmediato TEST_DB_API.ps1 ejecutado OK (Auth, Pets, Devices, Webhook, Readings).
+- DB/API smoke test real con KPCL0300 (Auth, RLS, Devices, Webhook, Readings).
+- Constraints de onboarding y device_id agregados en SQL.
+- SQL actualizado y aplicado.
+- Validaciones backend en POST /api/pets y POST /api/devices.
+- E2E validado (Auth -> Pets -> Devices -> Webhook -> Readings).
+- UI base login/today implementada (skeleton + estilos).
+- Documentacion del login parallax cerrada.
+- UI conectada a datos reales (login Supabase + feed con pets/devices/readings).
+- UI validada con datos reales (Mishu + KPCL0200).
+- Onboarding API ampliada (profiles PUT campos, pets POST/patch steps, devices POST actualiza pet_state).
 
-## Completado recientemente (2026-02-06)
-- Configuracion de Raspberry Pi Zero 2 W (cloud-init, SSH, Node.js).
-- Generacion de clave SSH dedicada para acceso a la RPi.
-- Creacion de documentacion: `Docs/RASPBERRY_BRIDGE_SETUP.md`.
-- Archivo `.env` del bridge con credenciales HiveMQ + Supabase.
-- Fusion de documentacion IoT del proyecto a Mauro_Context.
-- Creacion de docs: TOPICOS_MQTT.md, FIRMWARE_ESP8266.md, NOTA_SCHEMAS_SQL.md.
+## Conectividad validada (sin Bridge 24/7)
+- [x] Docs ↔ Backend (SQL + APIs + errores consistentes).
+- [x] Backend ↔ Supabase (constraints + schema cache + RLS smoke test).
+- [x] Backend ↔ Front (contratos documentados y pruebas OK).
+- [x] Diseño ↔ Producto (lineamientos y componentes definidos).
 
 ## Riesgos conocidos
-- La RPi cambia de IP si se mueve de red WiFi (no tiene IP fija).
-- **Discrepancia entre schemas SQL**: el bridge usa un schema diferente al de la app. Ver `Docs/NOTA_SCHEMAS_SQL.md`.
-- `ARQUITECTURA_COMPLETA.md` tenia texto con codificacion antigua (corregido parcialmente).
+- Realtime no esta integrado aun en frontend.
+
+## Verificaciones cerradas (operacion)
+- [x] Schema cache refrescado en Supabase.
+- [x] Constraints de onboarding aplicadas (2026-02-07).
+- [x] Variables de entorno validadas entre Vercel y Raspberry.
+- [x] Smoke test RLS ejecutado (multiusuario, 2026-02-07). Accesos cruzados devuelven 404 (esperado por RLS).
+
+
+
+
+
+
+
+
+
+
+
+

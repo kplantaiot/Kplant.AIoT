@@ -14,7 +14,7 @@ Existen **dos schemas SQL diferentes** en el proyecto que son incompatibles entr
 - `id` UUID (PK, auto-generado)
 - `owner_id` UUID (FK -> profiles)
 - `pet_id` UUID (FK -> pets)
-- `device_code` TEXT UNIQUE (ej: KPCL0001)
+- `device_id` TEXT UNIQUE (ej: KPCL0001)
 - `device_type` TEXT (food_bowl/water_bowl)
 - `status` TEXT (active/inactive)
 - `device_state` TEXT (factory/claimed/linked/offline/lost)
@@ -45,7 +45,7 @@ Existen **dos schemas SQL diferentes** en el proyecto que son incompatibles entr
 **Proposito**: Schema simple para el bridge MQTT que escribe datos de sensores
 
 ### Tabla `devices`
-- `id` TEXT (PK = device_code directo, ej: "KPCL0038")
+- `device_id` TEXT (PK, ej: "KPCL0038")
 - `wifi_status` TEXT
 - `wifi_ssid` TEXT
 - `wifi_ip` TEXT
@@ -75,7 +75,7 @@ Existen **dos schemas SQL diferentes** en el proyecto que son incompatibles entr
 
 | Aspecto | Schema App | Schema Bridge |
 |---------|-----------|---------------|
-| PK de devices | UUID auto-generado | TEXT (device_code directo) |
+| PK de devices | UUID auto-generado | TEXT (device_id directo) |
 | FK de readings | UUID -> devices.id | TEXT -> devices.id |
 | Nombre tabla lecturas | `readings` | `sensor_readings` |
 | Campo peso | `weight_grams` (INT) | `weight` (REAL) |
@@ -105,10 +105,10 @@ Antes de hacer el deploy final, hay que decidir:
 
 ### Opcion C: Migrar bridge al schema App (recomendada)
 - Modificar `bridge.js` para:
-  - Buscar dispositivos por `device_code` en vez de usar el code como PK.
+  - Buscar dispositivos por `device_id` en vez de usar el code como PK.
   - Insertar en `readings` con los campos del Schema App.
   - Mapear: `weight` -> `weight_grams`, `temp` -> `temperature`, `hum` -> `humidity`.
-- Auto-registro crea dispositivo con `device_code` y estado `factory`.
+- Auto-registro crea dispositivo con `device_id` y estado `factory`.
 - No requiere tablas extra.
 
 ---
@@ -118,8 +118,8 @@ Antes de hacer el deploy final, hay que decidir:
 **Se eligio Opcion C** - Schema unificado con bridge adaptado.
 
 ### Lo que se hizo:
-1. **`SQL_UNIFICADO.sql`** - Schema completo con 7 tablas: profiles, breeds, pets, pet_breeds, devices, sensor_readings, system_events. Devices usa UUID como PK + device_code TEXT UNIQUE. Incluye campos IoT (wifi_status, sensor_health, light_*) y campos App (owner_id, pet_id, device_state). RLS, triggers y vistas incluidas.
-2. **`bridge/bridge.js` v2.0** - Busca device por device_code para obtener UUID, mapea weight→weight_grams, temp→temperature, hum→humidity, cache en memoria device_code→UUID.
+1. **`SQL_UNIFICADO.sql`** - Schema completo con 7 tablas: profiles, breeds, pets, pet_breeds, devices, sensor_readings, system_events. Devices usa UUID como PK + device_id TEXT UNIQUE. Incluye campos IoT (wifi_status, sensor_health, light_*) y campos App (owner_id, pet_id, device_state). RLS, triggers y vistas incluidas.
+2. **`bridge/bridge.js` v2.0** - Busca device por device_id para obtener UUID, mapea weight→weight_grams, temp→temperature, hum→humidity, cache en memoria device_id→UUID.
 3. **`bridge/supabase_schema.sql`** - Deprecado, redirige a SQL_UNIFICADO.sql.
 
 ### Siguiente paso:

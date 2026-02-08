@@ -1,5 +1,5 @@
 # Kittypau - Hitos y Pendientes
-**Ultima actualizacion:** 2026-02-07 (v2)
+**Ultima actualizacion:** 2026-02-08 (v4)
 
 ---
 
@@ -18,17 +18,29 @@
 ### Bridge e Infraestructura
 9. [x] **Bridge Node.js:** `bridge.js` con wildcard (`+/SENSORS`, `+/STATUS`), auto-registro de dispositivos, escritura en Supabase.
 10. [x] **Raspberry Pi Zero 2 W:** OS Lite instalado, Node.js v20, SSH con clave ED25519, 3 redes WiFi (Jeivos, Casa 15, Suarez_Mujica_891).
-11. [x] **Deploy del bridge en RPi:** Archivos copiados, npm install (56 paquetes), servicio systemd habilitado 24/7 con auto-restart. 7 dispositivos detectados (KPCL0033, 0035, 0036, 0037, 0038, 0040).
+11. [x] **Deploy del bridge en RPi:** Archivos copiados, npm install (56 paquetes), servicio systemd habilitado 24/7 con auto-restart. 8 dispositivos detectados (KPCL0033, 0035, 0036, 0037, 0038, 0039, 0040).
 12. [x] **Supabase:** Proyecto creado, credenciales verificadas, datos fluyendo desde el bridge.
 13. [x] **HiveMQ Cloud:** Broker operativo, credenciales (Kittypau1/Kittypau1234), todos los dispositivos publicando.
-14. [x] **Flujo IoT verificado:** ESP8266 -> HiveMQ -> Bridge -> Supabase funcionando de extremo a extremo con 7 dispositivos.
+14. [x] **Flujo IoT verificado:** ESP8266 -> HiveMQ -> Bridge -> Supabase funcionando de extremo a extremo con 8 dispositivos.
 
 ### Documentacion
 15. [x] **Mauro_Context completo:** Arquitectura, topicos MQTT, firmware, bridge, RPi, schemas SQL, evaluacion del proyecto, checklist de deploy, estilos y flujos UX.
 
-### Schema SQL y Bridge v2.0
+### Schema SQL y Bridge v2.0 → v2.1
 16. [x] **Schema SQL unificado:** 7 tablas (profiles, breeds, pets, pet_breeds, devices, sensor_readings, system_events) con UUID como PK, RLS, triggers, vistas y datos iniciales de razas. Archivo: `SQL_UNIFICADO.sql`.
 17. [x] **Bridge v2.0:** Actualizado para schema unificado. Busca device por `device_code`, usa UUID como FK, mapea campos (weight→weight_grams, temp→temperature, hum→humidity), cache en memoria, guarda device_timestamp.
+
+### Migracion V2 y correcciones (2026-02-07)
+18. [x] **SQL Migracion V2:** `device_id` (TEXT) como PRIMARY KEY de `devices` (reemplaza UUID). `sensor_readings` usa `device_id` como FK directa sin JOINs. Script idempotente en `SQL_MIGRACION_V2.sql`.
+19. [x] **Bridge v2.1:** Escribe `device_id` directo (ej: KPCL0039) sin cache UUID ni lookups. Desplegado en RPi.
+20. [x] **KPCL0039 flasheado:** Firmware cargado en nueva placa. 8 dispositivos activos (KPCL0033, 0035, 0036, 0037, 0038, 0039, 0040).
+21. [x] **Fix crash bridge:** El bridge se caia porque `dotenv` buscaba `.env` en `~` en vez de `/home/kittypau/kittypau-bridge/`. Resuelto con `WorkingDirectory` en systemd.
+22. [x] **Servicio systemd mejorado:** `kittypau-bridge.service` con `Restart=always`, `RestartSec=5`, logs en `journalctl`. Arranca automaticamente con la Pi.
+23. [x] **SUPABASE_SERVICE_KEY corregido:** Se estaba usando el password de la DB (`sb_secret_...`) en vez del JWT service_role (`eyJ...`). Corregido en `.env` de la Pi.
+24. [x] **Proceso duplicado eliminado:** Se detecto y elimino un bridge manual corriendo en paralelo al servicio systemd.
+
+### Documentacion v4 (2026-02-08)
+25. [x] **Unificar `device_code` → `device_id` en docs:** Reemplazado en 24 archivos de Mauro_Context. `device_id` (TEXT, ej: KPCL0036) es el PRIMARY KEY de `devices` en toda la documentacion.
 
 ---
 
@@ -37,11 +49,24 @@
 ### FASE 0 - Decisiones bloqueantes (resolver antes de programar)
 18. [x] ~~**Reconciliar schemas SQL:**~~ Resuelto con Opcion C. Schema unificado en `SQL_UNIFICADO.sql`, bridge v2.0 adaptado.
 19. [ ] **Definir stack de la app:** Decidir entre la app existente (Vite+Express en `c:\Kittypau\1\apps\app_principal`) o construir la documentada en Mauro_Context (Next.js+Supabase+Vercel). Hay 3 arquitecturas incompatibles que deben unificarse. Ver `Mauro_Context/EVALUACION_PROYECTO.md`.
+20. [ ] **Definir flujo QR → claim device:** Documentar endpoint y logica para la transicion `factory → claimed → linked`. Definir que contiene el QR (device_id o token), como el usuario "reclama" un dispositivo auto-registrado por el bridge.
 
 ### FASE 1 - Infraestructura y base de datos
-20. [x] **Ejecutar SQL unificado en Supabase:** 7 tablas creadas, 26 razas cargadas, triggers, vistas y RLS activos.
-21. [x] **Deploy bridge v2.0 en RPi:** Copiado, .env actualizado con service_role key, servicio reiniciado. Sensors y Status fluyendo sin errores.
-22. [ ] **Tailscale + acceso remoto RPi:** Instalar Tailscale para SSH desde cualquier red sin depender de estar en la misma WiFi. Esto tambien resuelve el problema de IP dinamica.
+25. [x] **Ejecutar SQL unificado en Supabase:** 7 tablas creadas, 26 razas cargadas, triggers, vistas y RLS activos.
+26. [x] **Deploy bridge v2.1 en RPi:** Copiado, .env actualizado con service_role JWT correcto, servicio systemd reiniciado. Sensors y Status fluyendo sin errores.
+27. [ ] **Tailscale + acceso remoto RPi:** Instalar Tailscale para SSH desde cualquier red sin depender de estar en la misma WiFi. Esto tambien resuelve el problema de IP dinamica.
+28. [ ] **Proteger bridge local:** Agregar restriccion o doble confirmacion en `bridge/bridge.js` local para evitar ejecucion accidental desde Windows (el bridge productivo corre en la RPi).
+29. [x] **Verificar datos en Supabase:** Confirmado. sensor_readings de todos los dispositivos (KPCL0033-0040) insertandose correctamente con el service_role JWT.
+31. [ ] **Crear trigger auto-insert en `profiles`:** Cuando un usuario se registra via Supabase Auth, debe crearse automaticamente un row en `profiles` con el `id` y `email` del usuario. Sin esto, el registro no funciona.
+32. [ ] **Limpiar credenciales de documentacion:** Eliminar contraseñas MQTT, claves Supabase y URLs de broker expuestas en archivos de Mauro_Context antes de subir a repositorio publico.
+33. [ ] **Sensores fisicos con errores:** Revisar conexiones de hardware en las placas afectadas:
+    - KPCL0035: `ERR_HX711` + DHT falla (solo luz funciona)
+    - KPCL0037: `ERR_HX711`
+    - KPCL0038: `ERR_HX711`
+    - KPCL0039: `ERR_HX711`
+    - KPCL0036: `ERR_DHT`
+    - KPCL0040: `ERR_HX711` (ESP32-CAM, firmware diferente)
+    - KPCL0033: OK (unico con todos los sensores funcionando)
 
 ### FASE 2 - App Web
 21. [ ] **Construir app web:** Conectar a Supabase para leer datos del bridge. Incluye estructura base, rutas y componentes principales.
@@ -64,7 +89,7 @@
 
 ## Flujo actual (operativo)
 ```
-ESP8266 (7 dispositivos) --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
+ESP8266 (8 dispositivos) --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
                                                                                           |
                                                                                      [App Web] (pendiente)
 ```

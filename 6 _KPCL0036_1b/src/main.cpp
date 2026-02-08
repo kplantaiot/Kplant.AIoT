@@ -53,8 +53,9 @@ void publishDeviceStatus() {
     doc["wifi_status"] = wifi_status_str;
     doc["wifi_ssid"] = wifiOk ? WiFi.SSID() : "";
     doc["wifi_ip"] = wifiOk ? WiFi.localIP().toString() : "";
-    doc[DEVICE_ID] = device_status_str; // Use a macro to set the device ID as the key
+    doc[DEVICE_ID] = device_status_str;
     doc["sensor_health"] = last_sensor_health;
+    doc["device_type"] = DEVICE_TYPE;
     
     char payload[256];
     serializeJson(doc, payload);

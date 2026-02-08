@@ -9,21 +9,16 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 - `Docs/` se mantiene en la raiz para documentacion.
 - Endpoint webhook y cliente Supabase ya existen.
 - Prueba local del webhook exitosa.
-- Firmware ESP8266 completo (sensores, MQTT/TLS, OTA, calibracion).
-- Bridge Node.js (`bridge/bridge.js`) funcional con wildcard y auto-registro.
-- Raspberry Pi Zero 2 W configurada (OS, Node.js v20, SSH).
-- Deploy del bridge en RPi en progreso.
 
 ## Arquitectura propuesta (costo $0)
 1. **Frontend + API**: Next.js (Vercel Free)
 2. **DB + Auth + Realtime**: Supabase Free
-3. **MQTT Broker**: HiveMQ Cloud Free (TLS, puerto 8883)
-4. **Bridge MQTT**: Raspberry Pi Zero 2 W con Node.js (bridge.js)
-5. **Firmware**: ESP8266 con sensores (peso, temp, humedad, luz)
-6. **Flujo**:
-   - ESP8266 -> HiveMQ Cloud (MQTT/TLS:8883)
-   - HiveMQ Cloud -> Raspberry Pi (bridge.js via wildcard subscription)
-   - Bridge parsea JSON y escribe en Supabase (sensor_readings + devices)
+3. **MQTT**: HiveMQ Cloud Free
+4. **Bridge**: Raspberry Pi Zero 2 W (MQTT -> API)
+5. **Flujo**:
+   - ESP32 -> HiveMQ (MQTT)
+   - HiveMQ -> Raspberry Bridge -> Next.js API
+   - API guarda en Supabase
    - Frontend escucha Supabase Realtime
 
 ## Estructura del proyecto (propuesta)
@@ -61,19 +56,21 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 
 2. **pets**
    - `id` (uuid, PK)
-   - `owner_id` (uuid, FK -> profiles.id)
+   - `user_id` (uuid, FK -> profiles.id)
    - `name`
-   - `species` (cat/dog/other)
-   - `birth_date` (date, nullable)
+   - `type` (cat/dog)
+   - `origin`
+   - `pet_state`
    - `created_at`
 
 3. **devices**
    - `id` (uuid, PK)
    - `owner_id` (uuid, FK -> profiles.id)
-   - `pet_id` (uuid, FK -> pets.id, nullable)
-   - `device_code` (string, unique, ej: KPCL0001)
+   - `pet_id` (uuid, FK -> pets.id, NOT NULL)
+   - `device_id` (string, unique, ej: KPCL0001)
    - `device_type` (enum: food_bowl | water_bowl)
-   - `status` (active | inactive)
+   - `status` (active | inactive | maintenance)
+   - `device_state` (factory | claimed | linked | offline | lost | error)
    - `battery_level` (int)
    - `last_seen` (timestamp)
    - `created_at`
@@ -84,6 +81,7 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
    - `pet_id` (uuid, FK -> pets.id, nullable)
    - `weight_grams` (int, nullable)  # comida
    - `water_ml` (int, nullable)      # agua
+   - `flow_rate` (numeric, nullable)
    - `temperature` (float, nullable)
    - `humidity` (float, nullable)
    - `battery_level` (int, nullable)
@@ -91,11 +89,11 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 
 ### Reglas RLS (resumen)
 - `profiles`: cada usuario solo ve su perfil.
-- `pets`: `owner_id = auth.uid()`
+- `pets`: `user_id = auth.uid()`
 - `devices`: `owner_id = auth.uid()`
 - `readings`: se validan via join a devices/pets del usuario.
 
-## API endpoints minimos (Next.js)
+## API endpoints m�nimos (Next.js)
 1. **POST `/api/mqtt/webhook`**
    - Recibe datos desde HiveMQ.
    - Valida `x-webhook-token`.
@@ -107,7 +105,7 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 
 3. **GET/POST `/api/devices`**
    - Lista dispositivos.
-   - Registra dispositivo (device_code, tipo, mascota opcional).
+   - Registra dispositivo (device_id, tipo, pet_id obligatorio).
 
 4. **GET `/api/readings?device_id=...`**
    - Devuelve lecturas recientes para graficos.
@@ -137,15 +135,12 @@ Un usuario se registra, agrega una mascota, registra un dispositivo (plato intel
 5. Crear endpoints `/api/*`.
 6. Crear UI base y flujo de onboarding.
 7. Integrar Realtime en Dashboard.
-8. Desplegar bridge en Raspberry Pi (copiar, npm install, systemd).
-9. Verificar flujo end-to-end (ESP8266 -> HiveMQ -> RPi -> Supabase -> App).
-10. Deploy en Vercel con variables de entorno.
+8. Configurar Raspberry Bridge -> `/api/mqtt/webhook`.
+9. Deploy en Vercel con variables de entorno.
 
 ## Nota sobre el deploy
-- **Vercel**: frontend + API routes (`/api/*`). No hay backend separado para la web.
-- **Raspberry Pi**: ejecuta `bridge.js` 24/7 como servicio systemd. Es el unico componente on-premise.
-- **Supabase**: base de datos PostgreSQL gestionada en la nube.
-- El webhook (`/api/mqtt/webhook`) se mantiene como alternativa futura si se elimina la RPi.
+En este proyecto el deploy en **Vercel incluye frontend + API + backend ligero** (routes `/api/*`).
+No existe un backend separado: la base de datos esta en Supabase.
 
 ## Variables de entorno (ejemplo)
 ```
@@ -166,12 +161,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ---
 
 ## Proximos pasos inmediatos
-- Finalizar deploy del bridge en Raspberry Pi (systemd 24/7).
 - Implementar login y registro en UI.
 - Implementar CRUD de mascotas y dispositivos.
 - Habilitar Realtime en dashboard.
-- Deploy en Vercel con variables de entorno.
-- Prueba end-to-end en produccion.
+- Deploy en Vercel y configurar webhook HiveMQ.
 
 ## Documento maestro de dominio
 - Ver `Docs/DOC_MAESTRO_DOMINIO.md` antes de codificar.
@@ -191,3 +184,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 
 ## Migracion SQL
 - Ver `Docs/GUIA_MIGRACION_SQL.md`.
+
+## Bridge en Raspberry
+- Ver `Docs/RASPBERRY_BRIDGE.md` para despliegue 24/7 del puente MQTT.
+
+## Pruebas E2E
+- Ver `Docs/PRUEBAS_E2E.md` para validar el flujo completo.
+

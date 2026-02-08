@@ -1,7 +1,14 @@
-# Vistas y Pages de la App (Kittypau)
+﻿# Vistas y Pages de la App (Kittypau)
 
 ## Objetivo
 Definir la estructura de vistas antes de implementar UI o routing.
+
+---
+
+## Implementacion actual (2026-02-07)
+- /login implementado con layout parallax + login real (Supabase Auth).
+- /today implementado como feed vertical interpretado conectado a APIs.
+- / redirige a /login.
 
 ---
 
@@ -73,10 +80,10 @@ por "eventos / interpretaciones / historia".
 
 ### /onboarding/device
 - Registro dispositivo (QR obligatorio)
-- Asocia mascota + device_code
+- Asocia mascota + device_id
 **Datos / API**
 - `POST /api/devices`
-- Validar `device_code` unico
+- Validar `device_id` unico
 - Actualiza `pet_state` a `device_linked`
 
 ---
@@ -115,7 +122,7 @@ por "eventos / interpretaciones / historia".
 - Bateria, conexion, calibracion, firmware.
 **Datos / API**
 - `GET /api/devices`
-- `PATCH /api/devices/:id` (pendiente de definir)
+- `PATCH /api/devices/:id` (propuesto, ver `Docs/FRONT_BACK_APIS.md`)
 
 ### /settings
 - Perfil usuario
@@ -177,10 +184,15 @@ pet_onboarding_step:
 ---
 
 ## Componentes base sugeridos
-- Layout general con sidebar (app)
+- Layout general sin sidebar (app)
 - Wizard de onboarding
 - Card visual para opciones (tipo mascota, origen, etc.)
-- Selector de QR (camera o input manual)
+- Selector de QR (camara o input manual)
+
+---
+
+## Referencia visual del tablero
+- Ver `Docs/estilos y diseños.md` (paleta final, tipografia y estructura del tablero).
 
 ---
 
@@ -216,3 +228,97 @@ Los numeros existen, pero como evidencia secundaria.
 | /pet | Perfil conductual |
 | /bowl | Estado del plato |
 | /story | Diario automatico |
+
+---
+
+## Pantallas clave (detalle)
+
+### 1) Login (public)
+**Objetivo**: acceso rapido, cero friccion.
+**Layout**
+- Card centrada, fondo lifestyle.
+- CTA principal: "Continuar".
+- CTA secundario: "Crear cuenta".
+**Datos / API**
+- Supabase Auth (signInWithPassword / OAuth).
+**Estados**
+- Loading: usar loader global/route.
+- Error: credenciales invalidas.
+
+### 2) Registro (public)
+**Objetivo**: activar cuenta y disparar onboarding.
+**Layout**
+- Pop-up con pasos: Usuario ? Mascota ? Dispositivo.
+- Progreso visible.
+**Datos / API**
+- Supabase Auth (signUp).
+- `profiles` (create/update).
+
+### 3) Onboarding Usuario
+**Objetivo**: completar perfil basico.
+**Campos**: nombre, ciudad, pais, canal notificacion.
+**Datos / API**
+- `PUT /api/profiles`.
+- `user_onboarding_step`.
+
+### 4) Onboarding Mascota
+**Objetivo**: alta de mascota.
+**Campos**: nombre, tipo, edad, peso, entorno.
+**Datos / API**
+- `POST /api/pets`.
+- `pet_onboarding_step`.
+
+### 5) Onboarding Dispositivo
+**Objetivo**: vincular `device_id` con mascota.
+**Layout**
+- Input de codigo + QR opcional.
+**Datos / API**
+- `POST /api/devices`.
+- Actualiza `pet_state` a `device_linked`.
+
+### 6) Today (home)
+**Objetivo**: lectura interpretada del dia.
+**Layout**
+- Feed vertical, cards.
+- 1 mensaje principal + 1 accion.
+**Datos / API**
+- `GET /api/readings?device_id=...`
+- Realtime `readings`.
+**Estados**
+- Empty: "Aun no hay lecturas".
+- Error: "No se pudo cargar".
+
+### 7) Story (timeline)
+**Objetivo**: narrar eventos del dia.
+**Layout**
+- Timeline vertical con tarjetas.
+**Datos / API**
+- `GET /api/readings?device_id=...`
+- Reglas de `Docs/REGLAS_INTERPRETACION_IOT.md`.
+
+### 8) Pet (perfil)
+**Objetivo**: perfil conductual.
+**Layout**
+- Card de mascota + insights.
+**Datos / API**
+- `GET /api/pets`.
+- Lecturas recientes.
+
+### 9) Bowl (dispositivo)
+**Objetivo**: estado tecnico.
+**Layout**
+- Estado, bateria, ultima conexion.
+**Datos / API**
+- `GET /api/devices`.
+- `PATCH /api/devices/:id`.
+
+### 10) Settings
+**Objetivo**: ajustes de usuario.
+**Datos / API**
+- `PUT /api/profiles`.
+
+### Estados globales
+- Loading: `app/loading.tsx` + overlay global.
+- Empty: tarjetas con CTA.
+- Error: mensaje corto y accion de reintento.
+

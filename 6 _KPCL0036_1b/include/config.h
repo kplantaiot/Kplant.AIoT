@@ -11,8 +11,9 @@
 #define PIN_DHT        14           // D5 (GPIO14)
 #define PIN_LDR        A0           // Único pin ADC en ESP8266
 
-// ID del dispositivo
-#define DEVICE_ID      "KPCL0035"
+// Dispositivo
+#define DEVICE_ID      "KPCL0039"
+#define DEVICE_TYPE    "ESP8266(CP2102)"
 
 // WiFi por defecto
 #define WIFI_SSID      "Jeivos"

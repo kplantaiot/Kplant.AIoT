@@ -108,12 +108,14 @@ COMMENT ON TABLE pet_breeds IS 'Relacion N:M. Maximo 3 razas por mascota. Quiltr
 -- ============================================================
 
 -- 3a. Dispositivos (unifica app + bridge)
+-- PRIMARY KEY = device_id (KPCL0036). Es la clave natural del hardware.
+-- id UUID se mantiene como identificador interno (consistente con profiles/pets).
 CREATE TABLE devices (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_id TEXT PRIMARY KEY,                   -- ej: KPCL0036 (PK, viene del QR y del MQTT topic)
+  id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),  -- identificador interno
   owner_id UUID REFERENCES profiles(id) ON DELETE CASCADE,  -- nullable: bridge auto-registra sin dueno
   pet_id UUID REFERENCES pets(id) ON DELETE SET NULL,        -- nullable: puede existir sin mascota
-  device_id TEXT UNIQUE NOT NULL,              -- ej: KPCL0036 (viene del QR y del MQTT topic)
-  device_type TEXT CHECK (device_type IN ('food_bowl', 'water_bowl')),
+  device_type TEXT,                              -- tipo de placa: 'ESP8266(CP2102)', etc.
   device_state TEXT NOT NULL DEFAULT 'factory'
     CHECK (device_state IN ('factory', 'claimed', 'linked', 'offline', 'lost')),
   -- Campos IoT (actualizados por el bridge via STATUS)
@@ -129,12 +131,12 @@ CREATE TABLE devices (
 );
 
 COMMENT ON TABLE devices IS 'Dispositivos fisicos. El bridge auto-registra con device_id al primer mensaje MQTT.';
-COMMENT ON COLUMN devices.device_id IS 'Identificador unico del hardware (ej: KPCL0036). Usado como topic MQTT.';
+COMMENT ON COLUMN devices.device_id IS 'PRIMARY KEY. Identificador unico del hardware (ej: KPCL0036). Usado como topic MQTT.';
+COMMENT ON COLUMN devices.id IS 'UUID interno. Se mantiene por consistencia con profiles/pets.';
 COMMENT ON COLUMN devices.device_state IS 'factory → claimed (QR escaneado) → linked (asociado a mascota) → offline/lost';
 COMMENT ON COLUMN devices.owner_id IS 'NULL cuando el bridge auto-registra. Se asigna cuando el usuario escanea el QR.';
 
--- Indice para busqueda rapida por device_id (el bridge busca por esto)
-CREATE INDEX idx_devices_device_id ON devices(device_id);
+-- No se necesita indice en device_id porque es PRIMARY KEY (ya indexado automaticamente)
 
 -- 3b. Lecturas de sensores (unifica app + bridge)
 -- Usa device_id (ej: KPCL0039) como FK directa para consultas sin JOIN

@@ -1,13 +1,17 @@
-# Indice de Documentacion (Kittypau)
+﻿# Índice de Documentación (Kittypau)
 
 ## Plan y estado
 - `Docs/PLAN_PROYECTO_KITTYPAU.md`
 - `Docs/ESTADO_AVANCE.md`
 - `Docs/NOTAS_IMPLEMENTACION.md`
+- `Docs/MAPA_ECOSISTEMA.md`
+- `Docs/PLAN_IMPLEMENTACION.md`
+- `Docs/CIBERSEGURIDAD.md`
 
 ## Arquitectura
 - `Docs/ARQUITECTURA_PROYECTO.md`
 - `Docs/ARQUITECTURA_COMPLETA.md`
+- `Docs/DIAGRAMA_ARQUITECTURA_ACTUAL.md`
 
 ## Dominio y reglas
 - `Docs/DOC_MAESTRO_DOMINIO.md`
@@ -20,21 +24,40 @@
 - `Docs/SQL_SCHEMA.sql`
 - `Docs/GUIA_SQL_SUPABASE.md`
 - `Docs/GUIA_MIGRACION_SQL.md`
-- `Docs/NOTA_SCHEMAS_SQL.md` *(discrepancia entre schema App y schema Bridge)*
+- `Docs/CLEANUP_SQL.sql`
 
 ## APIs y backend
 - `Docs/FRONT_BACK_APIS.md`
 
-## IoT y firmware
-- `Docs/TOPICOS_MQTT.md` *(topics, payloads, comandos MQTT)*
-- `Docs/FIRMWARE_ESP8266.md` *(hardware, modulos, pinout, calibracion, OTA)*
-
 ## Flujos UX
 - `Docs/FLUJO_REGISTRO_DISPOSITIVO.md`
+- `Docs/IMAGENES_LOGIN.md`
 - `Docs/estilos y diseños.md`
 
 ## Deploy
 - `Docs/CHECKLIST_DEPLOY.md`
 
-## Infraestructura (Raspberry Pi)
-- `Docs/RASPBERRY_BRIDGE_SETUP.md`
+## CLI
+- `Docs/VERCEL_CLI.md`
+- `Docs/SUPABASE_CLI.md`
+- `Docs/HIVEMQ_MQTT_CLI.md`
+- `Docs/RASPBERRY_CLI.md`
+
+## Infraestructura Edge
+- `Docs/RASPBERRY_BRIDGE.md`
+- `Docs/TOPICOS_MQTT.md`
+
+## Pruebas
+- `Docs/PRUEBAS_E2E.md`
+- `Docs/AUTOMATIZACION_TESTS.md`
+
+
+
+
+## Scripts
+- Docs/TEST_DB_API.ps1
+
+- Docs/TEST_ONBOARDING_BACKEND.ps1
+
+- Docs/.env.test.example
+- Docs/.env.test.local (no versionado)
