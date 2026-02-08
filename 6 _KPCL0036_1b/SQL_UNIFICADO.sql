@@ -112,7 +112,7 @@ CREATE TABLE devices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID REFERENCES profiles(id) ON DELETE CASCADE,  -- nullable: bridge auto-registra sin dueno
   pet_id UUID REFERENCES pets(id) ON DELETE SET NULL,        -- nullable: puede existir sin mascota
-  device_code TEXT UNIQUE NOT NULL,              -- ej: KPCL0036 (viene del QR y del MQTT topic)
+  device_id TEXT UNIQUE NOT NULL,              -- ej: KPCL0036 (viene del QR y del MQTT topic)
   device_type TEXT CHECK (device_type IN ('food_bowl', 'water_bowl')),
   device_state TEXT NOT NULL DEFAULT 'factory'
     CHECK (device_state IN ('factory', 'claimed', 'linked', 'offline', 'lost')),
@@ -128,18 +128,19 @@ CREATE TABLE devices (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE devices IS 'Dispositivos fisicos. El bridge auto-registra con device_code al primer mensaje MQTT.';
-COMMENT ON COLUMN devices.device_code IS 'Identificador unico del hardware (ej: KPCL0036). Usado como topic MQTT.';
+COMMENT ON TABLE devices IS 'Dispositivos fisicos. El bridge auto-registra con device_id al primer mensaje MQTT.';
+COMMENT ON COLUMN devices.device_id IS 'Identificador unico del hardware (ej: KPCL0036). Usado como topic MQTT.';
 COMMENT ON COLUMN devices.device_state IS 'factory → claimed (QR escaneado) → linked (asociado a mascota) → offline/lost';
 COMMENT ON COLUMN devices.owner_id IS 'NULL cuando el bridge auto-registra. Se asigna cuando el usuario escanea el QR.';
 
--- Indice para busqueda rapida por device_code (el bridge busca por esto)
-CREATE INDEX idx_devices_device_code ON devices(device_code);
+-- Indice para busqueda rapida por device_id (el bridge busca por esto)
+CREATE INDEX idx_devices_device_id ON devices(device_id);
 
 -- 3b. Lecturas de sensores (unifica app + bridge)
+-- Usa device_id (ej: KPCL0039) como FK directa para consultas sin JOIN
 CREATE TABLE sensor_readings (
   id BIGSERIAL PRIMARY KEY,                      -- autoincremental para alto volumen
-  device_id UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+  device_id TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
   -- Datos del plato de comida/agua
   weight_grams REAL,                             -- peso en gramos (HX711 load cell)
   water_ml REAL,                                 -- mililitros de agua (futuro, para water_bowl)
@@ -158,7 +159,7 @@ CREATE TABLE sensor_readings (
 );
 
 COMMENT ON TABLE sensor_readings IS 'Lecturas de sensores. El bridge inserta cada 10s por dispositivo. ~8640 filas/dia/dispositivo.';
-COMMENT ON COLUMN sensor_readings.weight_grams IS 'Peso medido por HX711. Mapeado desde "weight" del bridge.';
+COMMENT ON COLUMN sensor_readings.device_id IS 'KPCL0039, KPCL0037, etc. FK directa a devices.device_id.';
 COMMENT ON COLUMN sensor_readings.device_timestamp IS 'Timestamp NTP del ESP8266. Referencia, no se usa como PK.';
 
 -- Indices para consultas frecuentes
@@ -177,7 +178,7 @@ CREATE TABLE system_events (
   user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   event_type TEXT NOT NULL,                      -- 'pet_created', 'device_linked', 'device_offline', etc.
   entity_type TEXT,                              -- 'pet', 'device', 'profile'
-  entity_id TEXT,                                -- UUID o device_code segun contexto
+  entity_id TEXT,                                -- UUID o device_id segun contexto
   metadata JSONB,                                -- datos adicionales del evento
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -200,7 +201,7 @@ BEGIN
   UPDATE devices
   SET last_seen = NEW.recorded_at,
       updated_at = NOW()
-  WHERE id = NEW.device_id;
+  WHERE device_id = NEW.device_id;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -236,11 +237,10 @@ CREATE TRIGGER trg_devices_updated_at
 -- VISTAS UTILES
 -- ============================================================
 
--- Vista: ultima lectura por dispositivo
+-- Vista: ultima lectura por dispositivo (sin JOIN, device_id directo)
 CREATE OR REPLACE VIEW latest_readings AS
 SELECT DISTINCT ON (sr.device_id)
   sr.device_id,
-  d.device_code,
   sr.weight_grams,
   sr.water_ml,
   sr.temperature,
@@ -250,14 +250,13 @@ SELECT DISTINCT ON (sr.device_id)
   sr.light_condition,
   sr.recorded_at
 FROM sensor_readings sr
-JOIN devices d ON d.id = sr.device_id
 ORDER BY sr.device_id, sr.recorded_at DESC;
 
 -- Vista: resumen de dispositivos con estado y ultima lectura
 CREATE OR REPLACE VIEW device_summary AS
 SELECT
   d.id,
-  d.device_code,
+  d.device_id,
   d.device_type,
   d.device_state,
   d.wifi_status,
@@ -274,7 +273,7 @@ SELECT
   lr.recorded_at AS last_reading_at
 FROM devices d
 LEFT JOIN pets p ON p.id = d.pet_id
-LEFT JOIN latest_readings lr ON lr.device_id = d.id;
+LEFT JOIN latest_readings lr ON lr.device_id = d.device_id;
 
 
 -- ============================================================
@@ -322,7 +321,7 @@ CREATE POLICY devices_delete ON devices FOR DELETE USING (auth.uid() = owner_id)
 CREATE POLICY readings_select ON sensor_readings FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM devices
-    WHERE devices.id = sensor_readings.device_id
+    WHERE devices.device_id = sensor_readings.device_id
     AND (devices.owner_id = auth.uid() OR devices.owner_id IS NULL)
   ));
 -- INSERT solo via service_role (bridge) - no se crea policy INSERT

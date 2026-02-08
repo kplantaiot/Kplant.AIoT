@@ -12,7 +12,7 @@
 #define PIN_LDR        A0           // Único pin ADC en ESP8266
 
 // ID del dispositivo
-#define DEVICE_ID      "KPCL0038"
+#define DEVICE_ID      "KPCL0035"
 
 // WiFi por defecto
 #define WIFI_SSID      "Jeivos"
