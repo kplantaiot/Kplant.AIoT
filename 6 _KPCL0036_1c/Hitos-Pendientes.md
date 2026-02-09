@@ -1,5 +1,5 @@
 # Kittypau - Hitos y Pendientes
-**Ultima actualizacion:** 2026-02-09 (v6)
+**Ultima actualizacion:** 2026-02-09 (v5)
 
 ---
 
@@ -54,11 +54,6 @@
 34. [x] **Logo Kittypau:** Manito_1.jpeg en header (80px) y login/register (160px). Header agrandado a h-20 con texto 3xl en Titan One.
 35. [x] **Layout responsivo:** Header sticky con logo + nombre + email + logout. Bottom nav con 4 tabs (Hoy, Mascota, Plato, Config).
 
-### OTA y re-flasheo (2026-02-09)
-36. [x] **OTA verificado en produccion:** Primera actualizacion OTA exitosa. PlatformIO con `upload_protocol = espota` y `upload_port = <IP>`. Requiere PC y ESP en la misma red WiFi + regla de Firewall de Windows para Python. Upload en 18 segundos.
-37. [x] **KPCL0039 re-flasheado como KPCL0031:** Firmware actualizado via OTA (sin cable USB). `config.h` con `DEVICE_ID "KPCL0031"`. Dispositivo reinicio y se auto-registro en Supabase via bridge.
-38. [x] **Entorno OTA en `platformio.ini`:** Nuevo `[env:ota]` con `upload_protocol = espota`. Para flashear otro dispositivo solo cambiar `upload_port` (IP) y `DEVICE_ID` en `config.h`.
-
 ---
 
 ## Pendiente
@@ -76,7 +71,7 @@
     - KPCL0035: `ERR_HX711` + DHT falla (solo luz funciona)
     - KPCL0037: `ERR_HX711`
     - KPCL0038: `ERR_HX711`
-    - KPCL0031 (ex-KPCL0039): `ERR_HX711`
+    - KPCL0039: `ERR_HX711`
     - KPCL0036: `ERR_DHT`
     - KPCL0040: `ERR_HX711` (ESP32-CAM, firmware diferente)
     - KPCL0033: OK (unico con todos los sensores funcionando)
@@ -117,7 +112,7 @@
 
 ## Flujo actual (operativo)
 ```
-ESP8266 (KPCL0031,0033,0035,0036,0037,0038,0040) --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
+ESP8266 (8 dispositivos) --MQTT/TLS--> HiveMQ Cloud --wildcard--> RPi Bridge --REST--> Supabase
                                                                                           |
                                                                                    App Web (Next.js)
                                                                                    localhost:3000

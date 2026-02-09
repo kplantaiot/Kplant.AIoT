@@ -12,7 +12,7 @@
 #define PIN_LDR        A0           // Único pin ADC en ESP8266
 
 // Dispositivo
-#define DEVICE_ID      "KPCL0031"
+#define DEVICE_ID      "KPCL0039"
 #define DEVICE_TYPE    "ESP8266(CP2102)"
 
 // WiFi por defecto
