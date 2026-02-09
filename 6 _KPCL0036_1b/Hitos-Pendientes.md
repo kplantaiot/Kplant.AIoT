@@ -58,6 +58,7 @@
 36. [x] **OTA verificado en produccion:** Primera actualizacion OTA exitosa. PlatformIO con `upload_protocol = espota` y `upload_port = <IP>`. Requiere PC y ESP en la misma red WiFi + regla de Firewall de Windows para Python. Upload en 18 segundos.
 37. [x] **KPCL0039 re-flasheado como KPCL0031:** Firmware actualizado via OTA (sin cable USB). `config.h` con `DEVICE_ID "KPCL0031"`. Dispositivo reinicio y se auto-registro en Supabase via bridge.
 38. [x] **Entorno OTA en `platformio.ini`:** Nuevo `[env:ota]` con `upload_protocol = espota`. Para flashear otro dispositivo solo cambiar `upload_port` (IP) y `DEVICE_ID` en `config.h`.
+39. [x] **Historial de dispositivos (SQL V3 + Bridge v2.2):** Columnas `notes`, `ip_history` (JSONB), `retired_at` en `devices`. Bridge v2.2 detecta cambios de IP y los registra automaticamente. KPCL0039 marcado como retirado con historial de IP. Script: `SQL_MIGRACION_V3.sql`. Bridge desplegado en RPi.
 
 ---
 
@@ -112,6 +113,7 @@
 50. [ ] **Buffer local en bridge:** SQLite o JSON para datos que fallen al escribir en Supabase, con reintento automatico.
 51. [ ] **Alertas de caida:** Notificacion (email/push) si el bridge deja de funcionar o un dispositivo deja de reportar.
 52. [ ] **Webhook HiveMQ (alternativa futura):** URL con header x-webhook-token y topic filter +/SENSORS como alternativa o complemento al bridge.
+53. [x] ~~**Historial de dispositivos:**~~ Implementado en SQL V3 + Bridge v2.2. Columnas `notes`, `ip_history`, `retired_at` en devices. Bridge registra cambios de IP automaticamente.
 
 ---
 

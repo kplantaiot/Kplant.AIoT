@@ -1,9 +1,9 @@
 /**
- * Kittypau Bridge v2.1 - MQTT to Supabase (Schema Unificado)
+ * Kittypau Bridge v2.2 - MQTT to Supabase (Schema Unificado)
  * Escucha mensajes MQTT de los dispositivos y los almacena en Supabase
  *
+ * v2.2: Registra cambios de IP en ip_history (JSONB) de devices
  * v2.1: sensor_readings usa device_id (TEXT) directamente como FK
- *       Sin cache UUID, sin lookups — escribe KPCL0039 directo
  * v2.0: Mapeo de campos: weight→weight_grams, temp→temperature, hum→humidity
  */
 
@@ -26,6 +26,9 @@ const supabase = createClient(
 // Set de device_ids ya registrados (evita queries repetidos)
 const knownDevices = new Set();
 
+// Cache de ultima IP conocida por dispositivo (para detectar cambios)
+const lastKnownIp = new Map();
+
 // ============ MQTT ============
 const mqttOptions = {
   host: process.env.MQTT_BROKER,
@@ -37,7 +40,7 @@ const mqttOptions = {
 };
 
 console.log('=================================');
-console.log('   Kittypau Bridge v2.1');
+console.log('   Kittypau Bridge v2.2');
 console.log('=================================');
 console.log(`MQTT Broker: ${process.env.MQTT_BROKER}`);
 console.log(`Supabase: ${process.env.SUPABASE_URL}`);
@@ -171,6 +174,19 @@ async function handleSensorData(deviceId, data) {
 }
 
 async function handleStatusData(deviceId, data) {
+  const newIp = data.wifi_ip ?? null;
+  const cachedIp = lastKnownIp.get(deviceId);
+
+  // Detectar cambio de IP y registrar en ip_history
+  if (newIp && cachedIp && newIp !== cachedIp) {
+    await appendIpHistory(deviceId, cachedIp, data.wifi_ssid);
+    console.log(`[IP-HISTORY] ${deviceId}: ${cachedIp} → ${newIp}`);
+  }
+
+  if (newIp) {
+    lastKnownIp.set(deviceId, newIp);
+  }
+
   // Actualiza campos IoT directamente por device_id (sin UUID)
   const { error } = await supabase
     .from('devices')
@@ -178,7 +194,7 @@ async function handleStatusData(deviceId, data) {
       last_seen: new Date().toISOString(),
       wifi_status: data.wifi_status ?? null,
       wifi_ssid: data.wifi_ssid ?? null,
-      wifi_ip: data.wifi_ip ?? null,
+      wifi_ip: newIp,
       sensor_health: data.sensor_health ?? null,
       device_type: data.device_type ?? null
     })
@@ -189,6 +205,31 @@ async function handleStatusData(deviceId, data) {
   } else {
     const mqttStatus = data[deviceId] || 'Unknown';
     console.log(`[SUPABASE] ✓ Status actualizado para ${deviceId} (${mqttStatus})`);
+  }
+}
+
+async function appendIpHistory(deviceId, oldIp, ssid) {
+  // Leer ip_history actual
+  const { data: device } = await supabase
+    .from('devices')
+    .select('ip_history')
+    .eq('device_id', deviceId)
+    .single();
+
+  const history = device?.ip_history ?? [];
+  history.push({
+    ip: oldIp,
+    ssid: ssid ?? null,
+    until: new Date().toISOString()
+  });
+
+  const { error } = await supabase
+    .from('devices')
+    .update({ ip_history: history })
+    .eq('device_id', deviceId);
+
+  if (error) {
+    console.error(`[SUPABASE] Error guardando ip_history: ${error.message}`);
   }
 }
 
