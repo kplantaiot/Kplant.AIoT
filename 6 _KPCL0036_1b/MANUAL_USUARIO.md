@@ -426,7 +426,7 @@ MQTT_USER=Kittypau1
 MQTT_PASS=Kittypau1234
 
 # Supabase
-SUPABASE_URL=https://koxraplgxifdmssfkilx.supabase.co
+SUPABASE_URL=https://zgwqtzazvkjkfocxnxsh.supabase.co
 SUPABASE_KEY=tu_anon_key_aqui
 ```
 
@@ -449,7 +449,7 @@ npm start
    Kittypau Bridge v1.0
 =================================
 MQTT Broker: cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud
-Supabase: https://koxraplgxifdmssfkilx.supabase.co
+Supabase: https://zgwqtzazvkjkfocxnxsh.supabase.co
 Dispositivos: KPCL0036, KPCL0037
 =================================
 

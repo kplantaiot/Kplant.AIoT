@@ -101,8 +101,8 @@ La Pi se conecta a la red WiFi `Jeivos`. Para encontrar su IP:
 
 | Campo | Valor |
 |-------|-------|
-| URL | `https://koxraplgxifdmssfkilx.supabase.co` |
-| Anon Key (JWT) | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtveHJhcGxneGlmZG1zc2ZraWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNzM5MDUsImV4cCI6MjA4NTc0OTkwNX0.9Ztnvnoj0JTjp2JE21R0kjZkXFO0broaMIfJTNHFxuI` |
+| URL | `https://zgwqtzazvkjkfocxnxsh.supabase.co` |
+| Anon Key | `sb_publishable_FYU2GgFbYs6VoptiKYnz3g_rgo1wlM2` |
 
 ---
 
@@ -115,8 +115,9 @@ MQTT_BROKER=cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud
 MQTT_PORT=8883
 MQTT_USER=Kittypau1
 MQTT_PASS=Kittypau1234
-SUPABASE_URL=https://koxraplgxifdmssfkilx.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtveHJhcGxneGlmZG1zc2ZraWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNzM5MDUsImV4cCI6MjA4NTc0OTkwNX0.9Ztnvnoj0JTjp2JE21R0kjZkXFO0broaMIfJTNHFxuI
+SUPABASE_URL=https://zgwqtzazvkjkfocxnxsh.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_d-ybUFvQ5hFqyxQGZlVywQ_8GYsUuEf
+SUPABASE_ANON_KEY=sb_publishable_FYU2GgFbYs6VoptiKYnz3g_rgo1wlM2
 ```
 
 ---
@@ -270,6 +271,6 @@ La Pi Zero 2 W usa cloud-init en lugar de `firstrun.sh`. Los archivos de configu
 - Revisar logs: `journalctl -u kittypau-bridge -n 20`
 
 ### El bridge no escribe en Supabase
-- Verificar `SUPABASE_URL` y `SUPABASE_KEY` en `.env`
+- Verificar `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `.env`
 - Verificar que las tablas `devices` y `sensor_readings` existen en Supabase
 - Revisar errores en logs: `journalctl -u kittypau-bridge -f`

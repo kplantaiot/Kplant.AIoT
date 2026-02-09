@@ -18,10 +18,18 @@ const DEVICE_PREFIX = 'KPCL';
 
 // ============ SUPABASE ============
 // Usa SUPABASE_SERVICE_KEY (service_role) para bypass de RLS.
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
-);
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_KEY ||
+  process.env.SUPABASE_ANON_KEY;
+
+if (!process.env.SUPABASE_URL || !supabaseKey) {
+  console.error('[SUPABASE] Falta SUPABASE_URL o key en variables de entorno.');
+  process.exit(1);
+}
+
+const supabase = createClient(process.env.SUPABASE_URL, supabaseKey);
 
 // Set de device_ids ya registrados (evita queries repetidos)
 const knownDevices = new Set();

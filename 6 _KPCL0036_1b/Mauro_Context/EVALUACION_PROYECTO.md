@@ -81,7 +81,7 @@ La app real escribe en **PostgreSQL local** con tablas de Drizzle ORM.
 ## 2. EVALUACION: SUPABASE
 
 ### Estado actual
-- Proyecto Supabase creado: `https://koxraplgxifdmssfkilx.supabase.co`
+- Proyecto Supabase creado: `https://zgwqtzazvkjkfocxnxsh.supabase.co`
 - Credenciales verificadas y funcionales.
 - **Pero la app real NO usa Supabase** - usa PostgreSQL local con Drizzle ORM.
 - Solo el bridge (`bridge.js`) escribe en Supabase.
