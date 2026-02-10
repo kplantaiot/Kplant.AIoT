@@ -10,7 +10,10 @@
       "Bash(dir:*)",
       "Bash(ls:*)",
       "Bash(npx create-next-app:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 10; ping -n 1 192.168.1.88\")",
+      "Bash(powershell -Command:*)",
+      "Bash(pio device monitor:*)"
     ]
   }
 }

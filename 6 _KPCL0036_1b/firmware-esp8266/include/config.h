@@ -22,8 +22,8 @@
 // MQTT Broker HiveMQ Cloud
 #define MQTT_BROKER    "cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud"
 #define MQTT_PORT      8883
-#define MQTT_USERNAME  "Kittypau1"
-#define MQTT_PASSWORD  "Kittypau1234"
+#define MQTT_USER      "Kittypau1"
+#define MQTT_PASS      "Kittypau1234"
 
 // Topics
 #define TOPIC_STATUS   DEVICE_ID "/STATUS"

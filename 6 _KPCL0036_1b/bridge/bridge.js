@@ -13,7 +13,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 // ============ CONFIGURACIÓN ============
 const USE_WILDCARD = true;
-const DEVICES = ['KPCL0035', 'KPCL0036', 'KPCL0037'];
+const DEVICES = ['KPCL0031', 'KPCL0033', 'KPCL0035', 'KPCL0036', 'KPCL0037', 'KPCL0038', 'KPCL0040', 'KPCL0041'];
 const DEVICE_PREFIX = 'KPCL';
 
 // ============ SUPABASE ============

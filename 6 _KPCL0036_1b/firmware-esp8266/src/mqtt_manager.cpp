@@ -153,7 +153,7 @@ void mqttManagerInit() {
     Serial.print("Puerto: ");
     Serial.println(MQTT_PORT);
     Serial.print("Usuario: ");
-    Serial.println(MQTT_USERNAME);
+    Serial.println(MQTT_USER);
     Serial.print("Heap libre: ");
     Serial.println(ESP.getFreeHeap());
 }
@@ -165,8 +165,10 @@ void reconnectMQTT() {
     // Sincronizar la hora por NTP solo una vez, después de conectar a WiFi
     if (!timeSynchronized) {
         Serial.print("Sincronizando hora con NTP...");
-        // Servidores NTP, zona horaria UTC-5 (ej. Colombia)
-        configTime(-5 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+        // Servidores NTP, zona horaria Chile (CLT/CLST)
+        configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+        setenv("TZ", "CLT4CLST,M9.1.6/24,M4.1.6/24", 1);
+        tzset();
 
         // Esperar con timeout y yield para evitar WDT reset
         unsigned long ntpStart = millis();
@@ -222,7 +224,7 @@ void reconnectMQTT() {
     yield();
 
     String clientId = DEVICE_ID;
-    if (mqttClient.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
+    if (mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASS)) {
         Serial.println("¡Conectado!");
         mqtt_retries = 0;
         retryInterval = 5000;  // Reset backoff

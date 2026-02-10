@@ -48,7 +48,7 @@
 // ==================== MQTT/HiveMQ Cloud CONFIGURATION ====================
 #define MQTT_BROKER    "cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud"
 #define MQTT_PORT      8883
-#define MQTT_USER      "Kittypau"
+#define MQTT_USER      "Kittypau1"
 #define MQTT_PASS      "Kittypau1234"
 #define MQTT_BUFFER_SIZE 1024
 
