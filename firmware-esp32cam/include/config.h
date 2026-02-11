@@ -5,7 +5,7 @@
 #define FIRMWARE_VERSION "1.0.0"
 
 // ==================== DEVICE CONFIGURATION ====================
-#define DEVICE_ID      "KPCL0040"
+#define DEVICE_ID      "KPCL0041"
 #define DEVICE_TYPE    "ESP32-CAM(AI-Thinker)"
 
 // ==================== PIN DEFINITIONS (ESP32-CAM) ====================

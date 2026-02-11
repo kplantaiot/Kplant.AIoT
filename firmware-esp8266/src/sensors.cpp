@@ -65,8 +65,8 @@ String sensorsReadAndPublish() {
     struct tm * timeinfo;
     char timestamp_str[20];
     time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(timestamp_str, sizeof(timestamp_str), "%m-%d-%Y %H:%M:%S", timeinfo);
+    timeinfo = gmtime(&rawtime);
+    strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%dT%H:%M:%SZ", timeinfo);
     doc["timestamp"] = timestamp_str;
 
     // --- Lectura de Sensores ---

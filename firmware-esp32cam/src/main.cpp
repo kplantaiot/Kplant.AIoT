@@ -60,7 +60,6 @@ void publishDeviceStatus() {
     doc["wifi_ip"] = wifiOk ? WiFi.localIP().toString() : "";
     doc[DEVICE_ID] = device_status_str;
     doc["sensor_health"] = last_sensor_health;
-    doc["device_type"] = DEVICE_TYPE;
     doc["camera_status"] = cameraOk ? "OK" : "ERROR";
 
     // Agregar URL de streaming si esta disponible

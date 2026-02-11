@@ -21,13 +21,18 @@ static std::vector<WifiCredential> knownNetworks;
 static bool wifiConnected = false;
 static String lastSuccessfulSSID = "";
 
+void saveWifiCredentials();
+
 void loadWifiCredentials() {
     knownNetworks.clear();
     if (!LittleFS.exists(WIFI_CRED_FILE)) {
-        // Redes WiFi por defecto para dispositivos nuevos
-        knownNetworks.push_back({WIFI_SSID, WIFI_PASS});
+        // Crear wifi.json con lista base unificada si no existe
+        knownNetworks.push_back({"Jeivos", "jdayne212"});
         knownNetworks.push_back({"Casa 15", "mateo916"});
         knownNetworks.push_back({"Suarez_Mujica_891", "SuarezMujica891"});
+        knownNetworks.push_back({"Mauro", "mauro1234"});
+        knownNetworks.push_back({"VTR-2736410_2g", "wp8Fjtwyydhq"});
+        saveWifiCredentials();
         return;
     }
     File f = LittleFS.open(WIFI_CRED_FILE, "r");
