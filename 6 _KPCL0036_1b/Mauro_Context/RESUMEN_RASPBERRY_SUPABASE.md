@@ -4,6 +4,33 @@
 Se actualizo el Bridge (Raspberry Pi) para escribir en el nuevo proyecto de Supabase. El flujo operativo es:
 ESP8266 -> HiveMQ -> Bridge (Raspberry) -> Supabase
 
+## Flujo completo (conexion hasta Supabase)
+
+```
+ESP8266 / ESP32-CAM
+   │  (MQTT/TLS 8883)
+   ▼
+HiveMQ Cloud
+   │  (suscripcion wildcard +/STATUS, +/SENSORS)
+   ▼
+Raspberry Pi Zero 2 W (bridge.js)
+   │  (REST API)
+   ▼
+Supabase (PostgreSQL)
+```
+
+### Que se envia desde el dispositivo
+- **SENSORS**: peso, temperatura, humedad, luz, timestamp
+- **STATUS**: wifi_status, wifi_ssid, wifi_ip, sensor_health, device_model
+
+### Que guarda el bridge en Supabase
+- `devices`: estado WiFi, IP, salud de sensores, modelo de placa, last_seen
+- `sensor_readings`: lecturas historicas con `device_id` como FK
+
+### Proyecto Supabase activo
+- **SUPABASE_URL**: `https://zgwqtzazvkjkfocxnxsh.supabase.co`
+- El bridge usa `SUPABASE_SERVICE_ROLE_KEY` desde `/home/kittypau/kittypau-bridge/.env`
+
 ## Estado actual
 - Bridge en Raspberry: **activo y corriendo** via systemd.
 - Supabase: **recibiendo datos** (sensor_readings y status).
