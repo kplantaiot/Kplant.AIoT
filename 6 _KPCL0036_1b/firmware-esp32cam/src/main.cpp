@@ -25,6 +25,9 @@ static unsigned long lastStatusPublishTime = 0;
 static String last_sensor_health = "Initializing";
 static bool cameraOk = false;
 
+// Flag para pausar tareas durante OTA
+static volatile bool otaInProgress = false;
+
 // Online/Offline con debounce
 static bool hasPublishedOnce = false;
 static bool deviceOnline = false;
@@ -61,6 +64,7 @@ void publishDeviceStatus() {
     doc[DEVICE_ID] = device_status_str;
     doc["sensor_health"] = last_sensor_health;
     doc["device_type"] = DEVICE_TYPE;
+    doc["device_model"] = DEVICE_MODEL;
     doc["camera_status"] = cameraOk ? "OK" : "ERROR";
 
     // Agregar URL de streaming si esta disponible
@@ -112,8 +116,14 @@ void setup() {
     // 4. OTA
     Serial.println("[3/6] Configurando OTA...");
     ArduinoOTA.setHostname(DEVICE_ID);
-    ArduinoOTA.onStart([]() { Serial.println("[OTA] Iniciando..."); });
-    ArduinoOTA.onEnd([]() { Serial.println("[OTA] Completo."); });
+    ArduinoOTA.onStart([]() {
+        Serial.println("[OTA] Iniciando... (pausando MQTT y sensores)");
+        otaInProgress = true;
+    });
+    ArduinoOTA.onEnd([]() {
+        Serial.println("[OTA] Completo.");
+        otaInProgress = false;
+    });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
         Serial.printf("[OTA] Progreso: %u%%\r", (progress / (total / 100)));
     });
@@ -155,8 +165,11 @@ void setup() {
 void loop() {
     unsigned long now = millis();
 
-    // OTA
+    // OTA (siempre activo, prioridad maxima)
     ArduinoOTA.handle();
+
+    // Durante OTA, solo manejar OTA y WiFi
+    if (otaInProgress) return;
 
     // Mantener conexion WiFi
     wifiManagerLoop();

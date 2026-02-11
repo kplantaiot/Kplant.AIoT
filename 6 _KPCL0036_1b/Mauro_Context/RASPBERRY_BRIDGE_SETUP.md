@@ -61,26 +61,48 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOt3S4sp6SQGqR3cszt/zoQL083DQT1myO9SGHZFbVWn
 **Clave privada local:** `C:\Users\Equipo\.ssh\kittypau_rpi`
 
 ### Encontrar la IP de la Pi
-La Pi se conecta a la red WiFi `Jeivos`. Para encontrar su IP:
+La Pi se conecta automaticamente a cualquiera de las redes configuradas. La IP cambia segun la red:
 
-1. Revisar el router (192.168.x.1) en la lista de dispositivos conectados
+| Red | Rango IP tipico | IP conocida |
+|-----|----------------|-------------|
+| Jeivos | 192.168.100.x | 192.168.100.119 |
+| Casa 15 | 192.168.1.x | 192.168.1.90 |
+
+Para encontrar la IP:
+1. Revisar el router en la lista de dispositivos conectados
 2. O escanear la red:
    ```bash
-   # Desde Git Bash / PowerShell
-   for i in $(seq 1 254); do ping -n 1 -w 200 192.168.x.$i > /dev/null 2>&1 && echo "192.168.x.$i ALIVE" & done; wait
+   # Desde Git Bash (funciona en Windows)
+   for i in $(seq 1 254); do ping -n 1 -w 200 192.168.1.$i > /dev/null 2>&1 && echo "192.168.1.$i ALIVE"; done
    ```
-3. Luego probar SSH en cada IP encontrada
+3. Probar SSH en cada IP encontrada:
+   ```bash
+   ssh -o ConnectTimeout=5 -i "C:/Users/Equipo/.ssh/kittypau_rpi" kittypau@<IP> "hostname"
+   ```
+   Si responde `kittypau-bridge`, es la Pi.
 
 ---
 
-## Red WiFi de la Pi
+## Redes WiFi de la Pi
 
-| Campo | Valor |
-|-------|-------|
-| SSID | Jeivos |
-| Contrasena | jdayne212 |
-| Protocolo | WPA2 |
-| Metodo de config | cloud-init (`network-config` en bootfs) |
+La Pi tiene multiples redes configuradas para funcionar en distintas ubicaciones.
+Se configuran via cloud-init (`network-config` en la particion bootfs de la microSD).
+
+| SSID | Contrasena | Ubicacion |
+|------|-----------|-----------|
+| Jeivos | jdayne212 | Red principal del proyecto |
+| Casa 15 | mateo916 | Red secundaria |
+| Suarez_Mujica_891 | SuarezMujica891 | Red alternativa |
+| Burgosa5g | Lunita1176 | Red alternativa (5GHz - Pi Zero 2W solo soporta 2.4GHz) |
+| Mauro | mauro1234 | Red movil/hotspot |
+
+**Nota**: La Pi Zero 2 W solo soporta WiFi 2.4GHz (802.11 b/g/n). Redes 5GHz como Burgosa5g no funcionaran a menos que tengan banda dual.
+
+Las passwords en `network-config` estan como hash WPA PSK (64 hex chars).
+Para generar el hash de una nueva red:
+```bash
+python -c "import hashlib; print(hashlib.pbkdf2_hmac('sha1', b'PASSWORD', b'SSID', 4096, 32).hex())"
+```
 
 ---
 
@@ -169,12 +191,25 @@ El bridge usa suscripcion wildcard y filtra por prefijo `KPCL`:
 ```json
 {
   "wifi_status": "Conectado",
-  "wifi_ssid": "Jeivos",
-  "wifi_ip": "192.168.100.50",
-  "KPCL0038": "Online",
-  "sensor_health": "OK"
+  "wifi_ssid": "Casa 15",
+  "wifi_ip": "192.168.1.85",
+  "KPCL0037": "Online",
+  "sensor_health": "OK",
+  "device_type": "comedero",
+  "device_model": "NodeMCU v3 CP2102"
 }
 ```
+
+**Campos de STATUS guardados en tabla `devices`:**
+
+| Campo MQTT | Columna DB | Descripcion |
+|------------|-----------|-------------|
+| `wifi_status` | `wifi_status` | Estado WiFi ("Conectado") |
+| `wifi_ssid` | `wifi_ssid` | Red WiFi actual |
+| `wifi_ip` | `wifi_ip` | IP del dispositivo en la red |
+| `sensor_health` | `sensor_health` | Estado de sensores ("OK", "ERR_DHT", etc.) |
+| `device_type` | `device_type` | Funcion del dispositivo: "comedero", "bebedero", "comedero_cam", "bebedero_cam" |
+| `device_model` | `device_model` | Modelo de placa: "NodeMCU v3 CP2102", "AI-Thinker ESP32-CAM" |
 
 ---
 
@@ -251,14 +286,53 @@ La Pi Zero 2 W usa cloud-init en lugar de `firstrun.sh`. Los archivos de configu
 
 **Nota importante**: El Raspberry Pi Imager tiene un bug conocido con la Pi Zero 2 W donde no genera correctamente el archivo `user-data`. Si se necesita reflashear, crear manualmente el `user-data` en la particion bootfs con el hash de contrasena generado via `openssl passwd -6 <password>`.
 
+### Agregar una nueva red WiFi
+
+Cloud-init solo procesa `network-config` en el **primer boot** (o cuando cambia el instance-id).
+Para agregar una nueva red WiFi:
+
+1. Apagar la Pi y sacar la microSD
+2. Insertar la microSD en el PC (aparece como unidad FAT32, ej. `E:\`)
+3. Editar `E:\network-config` y agregar la red bajo `access-points`:
+   ```yaml
+   "NombreSSID":
+     password: "<hash_wpa_psk_64_hex>"
+   ```
+4. **Cambiar el instance-id** en `E:\meta-data` para forzar cloud-init a re-procesar:
+   ```
+   instance-id: rpi-imager-1770411050503-v3
+   ```
+   (agregar `-vN` al final, incrementando el numero)
+5. Opcionalmente crear archivo vacio `E:\ssh` para asegurar que SSH se active
+6. Poner la SD en la Pi y encender. El primer boot tarda ~60-90 segundos (cloud-init reconfigura red)
+
+### Actualizar el bridge remotamente
+
+Una vez que la Pi esta en la red y accesible por SSH:
+```bash
+# Copiar bridge.js actualizado
+scp -i "C:/Users/Equipo/.ssh/kittypau_rpi" bridge.js kittypau@<IP>:/home/kittypau/kittypau-bridge/
+
+# Copiar .env si cambio
+scp -i "C:/Users/Equipo/.ssh/kittypau_rpi" .env kittypau@<IP>:/home/kittypau/kittypau-bridge/
+
+# Reiniciar servicio
+ssh -i "C:/Users/Equipo/.ssh/kittypau_rpi" kittypau@<IP> "sudo systemctl restart kittypau-bridge"
+
+# Verificar logs
+ssh -i "C:/Users/Equipo/.ssh/kittypau_rpi" kittypau@<IP> "sudo journalctl -u kittypau-bridge -n 30 --no-pager"
+```
+
 ---
 
 ## Troubleshooting
 
 ### No puedo encontrar la IP de la Pi
-- Verificar que la Pi y el PC estan en la misma red WiFi (Jeivos)
+- Verificar que la Pi y el PC estan en la misma red WiFi
+- La Pi se conecta a: Jeivos, Casa 15, Suarez_Mujica_891, Burgosa5g, Mauro
 - Escanear la red con ping sweep o app Fing
 - Revisar lista de dispositivos en el router
+- Si ninguna red configurada esta disponible, sacar la SD y agregar la red actual (ver seccion cloud-init)
 
 ### SSH rechaza la contrasena
 - Verificar que el archivo `user-data` existe en bootfs con el hash correcto

@@ -7,6 +7,7 @@
 - **Framework**: Arduino (via PlatformIO)
 - **Lenguaje**: C++
 - **Filesystem**: LittleFS (para credenciales WiFi y calibracion)
+- **Ruta de firmware activa**: `c:\Kittypau\firmware-esp8266`
 
 ---
 
@@ -53,11 +54,13 @@ LDR: 3V3 ── LDR ──┬── A0
 
 ---
 
-## Estructura del firmware
+## Estructura del firmware (firmware-esp8266)
 
 ```
 include/
   config.h              # Configuracion global (IDs, pines, MQTT, calibracion)
+data/
+  wifi.json             # Lista de WiFi conocidas (se crea si no existe)
 src/
   main.cpp              # Punto de entrada, setup/loop, intervalos de publicacion
   wifi_manager.cpp/h    # Gestion de multiples redes WiFi con LittleFS
@@ -78,6 +81,7 @@ platformio.ini          # Configuracion de build PlatformIO
 - Si falla, escanea redes visibles y prueba solo las conocidas.
 - Timeout de 5 segundos por intento.
 - Soporta comandos remotos: `ADDWIFI` y `REMOVEWIFI` via MQTT.
+- Si `wifi.json` no existe, lo crea con la lista base unificada.
 
 ### mqtt_manager
 - Conexion TLS al puerto 8883 con certificado ISRG Root X1 embebido.
@@ -106,9 +110,7 @@ platformio.ini          # Configuracion de build PlatformIO
 ```c
 #define PROJECT_NAME "Kittypau"
 #define FIRMWARE_VERSION "1.0.0"
-#define DEVICE_ID      "KPCL0038"     // Cambiar por dispositivo
-#define WIFI_SSID      "Jeivos"       // Red WiFi por defecto
-#define WIFI_PASS      "jdayne212"
+#define DEVICE_ID      "KPCL0035"     // Cambiar por dispositivo
 #define MQTT_BROKER    "cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud"
 #define MQTT_PORT      8883
 #define MQTT_USERNAME  "Kittypau1"
@@ -118,6 +120,20 @@ platformio.ini          # Configuracion de build PlatformIO
 ```
 
 Para agregar un nuevo dispositivo: cambiar `DEVICE_ID` y reflashear.
+
+## WiFi conocidas (data/wifi.json)
+
+Archivo unificado en `c:\Kittypau\firmware-esp8266\data\wifi.json`:
+
+```
+Jeivos
+Casa 15
+Suarez_Mujica_891
+Mauro
+VTR-2736410_2g
+```
+
+Se pueden agregar/remover por `/cmd` con `ADDWIFI` y `REMOVEWIFI`.
 
 ---
 
@@ -166,15 +182,18 @@ board_build.filesystem = littlefs
 
 ---
 
-## Flasheo
+## Flasheo (USB y OTA)
 
 ```bash
-# Primer flasheo (borrar flash + subir)
-pio run --target erase -e nodemcuv2
-pio run --target upload -e nodemcuv2
+# USB (ejemplo COM7)
+cd c:\Kittypau\firmware-esp8266
+pio run -e nodemcuv2 -t upload --upload-port COM7
 
-# Actualizacion (sin borrar config)
-pio run --target upload -e nodemcuv2
+# OTA (mismo WiFi, IP del dispositivo)
+pio run -e ota -t upload
+
+# Subir filesystem (wifi.json / calibration)
+pio run -e nodemcuv2 -t uploadfs --upload-port COM7
 
 # Monitor serial
 pio device monitor
@@ -198,16 +217,6 @@ pio device monitor
 12. [x] Actualizaciones OTA (ArduinoOTA)
 13. [x] Filtro deadband de 2g para estabilidad del peso
 14. [x] Verificacion de memoria heap antes de TLS (>20KB)
-
----
-
-## Dispositivos conocidos
-
-| DEVICE_ID | Descripcion |
-|-----------|-------------|
-| KPCL0036 | Primer prototipo |
-| KPCL0037 | Segundo prototipo |
-| KPCL0038 | Tercero (configurado actualmente en config.h) |
 
 ---
 

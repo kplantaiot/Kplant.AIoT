@@ -49,15 +49,16 @@ void publishDeviceStatus() {
     const char* device_status_str = deviceOnline ? "Online" : "Offline";
 
     // Crear el payload JSON
-    StaticJsonDocument<256> doc;
+    StaticJsonDocument<320> doc;
     doc["wifi_status"] = wifi_status_str;
     doc["wifi_ssid"] = wifiOk ? WiFi.SSID() : "";
     doc["wifi_ip"] = wifiOk ? WiFi.localIP().toString() : "";
     doc[DEVICE_ID] = device_status_str;
     doc["sensor_health"] = last_sensor_health;
     doc["device_type"] = DEVICE_TYPE;
-    
-    char payload[256];
+    doc["device_model"] = DEVICE_MODEL;
+
+    char payload[320];
     serializeJson(doc, payload);
 
     // Publicar el estado

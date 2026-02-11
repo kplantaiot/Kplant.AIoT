@@ -12,12 +12,13 @@
 #define PIN_LDR        A0           // Único pin ADC en ESP8266
 
 // Dispositivo
-#define DEVICE_ID      "KPCL0031"
-#define DEVICE_TYPE    "ESP8266(CP2102)"
+#define DEVICE_ID      "KPCL0033"
+#define DEVICE_TYPE    "comedero"              // Funcion: "comedero", "bebedero"
+#define DEVICE_MODEL   "NodeMCU v3 CP2102"     // Modelo de placa electronica
 
 // WiFi por defecto
-#define WIFI_SSID      "Jeivos"
-#define WIFI_PASS      "jdayne212"
+#define WIFI_SSID      "Casa 15"
+#define WIFI_PASS      "mateo916"
 
 // MQTT Broker HiveMQ Cloud
 #define MQTT_BROKER    "cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud"

@@ -5,8 +5,9 @@
 #define FIRMWARE_VERSION "1.0.0"
 
 // ==================== DEVICE CONFIGURATION ====================
-#define DEVICE_ID      "KPCL0040"
-#define DEVICE_TYPE    "ESP32-CAM(AI-Thinker)"
+#define DEVICE_ID      "KPCL0041"
+#define DEVICE_TYPE    "comedero_cam"           // Funcion: "comedero_cam", "bebedero_cam"
+#define DEVICE_MODEL   "AI-Thinker ESP32-CAM"   // Modelo de placa electronica
 
 // ==================== PIN DEFINITIONS (ESP32-CAM) ====================
 // HX711 Load Cell (usando pines libres del ESP32-CAM)
@@ -42,8 +43,8 @@
 #define PCLK_GPIO_NUM     22
 
 // ==================== WiFi CONFIGURATION ====================
-#define WIFI_SSID      "Jeivos"
-#define WIFI_PASS      "jdayne212"
+#define WIFI_SSID      "Casa 15"
+#define WIFI_PASS      "mateo916"
 
 // ==================== MQTT/HiveMQ Cloud CONFIGURATION ====================
 #define MQTT_BROKER    "cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud"

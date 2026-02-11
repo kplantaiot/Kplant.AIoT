@@ -196,16 +196,21 @@ async function handleStatusData(deviceId, data) {
   }
 
   // Actualiza campos IoT directamente por device_id (sin UUID)
+  // Evita sobreescribir con null si el firmware antiguo no envía ciertos campos.
+  const updateFields = {
+    last_seen: new Date().toISOString()
+  };
+
+  if (data.wifi_status !== undefined) updateFields.wifi_status = data.wifi_status;
+  if (data.wifi_ssid !== undefined) updateFields.wifi_ssid = data.wifi_ssid;
+  if (newIp) updateFields.wifi_ip = newIp;
+  if (data.sensor_health !== undefined) updateFields.sensor_health = data.sensor_health;
+  if (data.device_type) updateFields.device_type = data.device_type;
+  if (data.device_model) updateFields.device_model = data.device_model;
+
   const { error } = await supabase
     .from('devices')
-    .update({
-      last_seen: new Date().toISOString(),
-      wifi_status: data.wifi_status ?? null,
-      wifi_ssid: data.wifi_ssid ?? null,
-      wifi_ip: newIp,
-      sensor_health: data.sensor_health ?? null,
-      device_type: data.device_type ?? null
-    })
+    .update(updateFields)
     .eq('device_id', deviceId);
 
   if (error) {

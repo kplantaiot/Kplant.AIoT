@@ -13,7 +13,12 @@
       "Bash(npx next build:*)",
       "Bash(powershell -Command \"Start-Sleep -Seconds 10; ping -n 1 192.168.1.88\")",
       "Bash(powershell -Command:*)",
-      "Bash(pio device monitor:*)"
+      "Bash(pio device monitor:*)",
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash(~/.platformio/penv/Scripts/platformio.exe run -e ota --target upload)",
+      "Bash(pio run:*)",
+      "Bash(C:UsersEquipo.platformiopackagestool-esptoolpyesptool.py --port COM8 erase_flash)"
     ]
   }
 }
