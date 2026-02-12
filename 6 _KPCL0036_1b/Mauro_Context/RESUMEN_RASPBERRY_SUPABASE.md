@@ -417,6 +417,59 @@ CALIBRATE_WEIGHT:set_scale:4301
 
 ---
 
+## Actualizacion 2026-02-12: Bridge v2.3 + RPi status publishing (KPBR0001)
+
+### Bridge v2.3 — Status de la RPi via MQTT
+- Se agrego publicacion periodica del estado de la Raspberry Pi al broker MQTT
+- Device ID: **KPBR0001** (prefijo KPBR = Kittypau Bridge)
+- Topic: `KPBR0001/STATUS`
+- Intervalo: cada 60 segundos
+- Archivo modificado: `bridge/bridge.js` (v2.2 → v2.3)
+
+### Payload publicado
+```json
+{
+  "device_id": "KPBR0001",
+  "device_type": "bridge",
+  "device_model": "Raspberry Pi Zero 2 W",
+  "hostname": "kittypau-bridge",
+  "wifi_ssid": "Casa 15",
+  "wifi_ip": "192.168.1.90",
+  "uptime_min": 357,
+  "ram_used_mb": 241,
+  "ram_total_mb": 426,
+  "disk_used_pct": 19,
+  "cpu_temp": 49.9,
+  "bridge_status": "active",
+  "timestamp": "2026-02-12T03:01:04.000Z"
+}
+```
+
+### Detalles tecnicos
+- Usa modulos Node.js `os` (memoria, uptime, hostname) y `child_process.execSync` (SSID, IP, disco, CPU temp)
+- SSID obtenido via `nmcli -t -f active,ssid dev wifi` (compatible con locales en/es)
+- Temperatura CPU leida de `/sys/class/thermal/thermal_zone0/temp` (milligrados → °C)
+- El filtro wildcard del bridge (`DEVICE_PREFIX = 'KPCL'`) ignora sus propios mensajes `KPBR0001/STATUS`
+- Visible en MQTT Explorer bajo topic `KPBR0001/STATUS`
+
+### Tailscale
+- Tailscale fue **instalado** en la RPi (v1.94.1) pero **no activado** (`tailscale up` pendiente)
+- Requiere autenticacion via navegador con cuenta Tailscale
+- Utilidad: SSH remoto a la RPi desde cualquier red
+- **No habilita OTA remoto** — ArduinoOTA requiere misma LAN
+- Se retomara cuando haya otra RPi en la red remota (Suarez_Mujica_891)
+
+### OTA sesion 3 — ESP8266 actualizados (ultimo firmware con todos los fixes)
+| Device | IP | Resultado |
+|--------|-----|-----------|
+| KPCL0033 | 192.168.1.88 | OK |
+| KPCL0034 | 192.168.1.85 | OK |
+| KPCL0035 | 192.168.1.93 | OK |
+| KPCL0037 | 192.168.1.89 | OK |
+| KPCL0038 | 192.168.1.92 | OK |
+
+---
+
 ## Tareas Pendientes
 
 ### 1. Calibracion de celda de carga (HX711) - Dispositivos restantes

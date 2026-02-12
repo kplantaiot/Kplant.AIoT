@@ -2,6 +2,7 @@
  * Kittypau Bridge v2.2 - MQTT to Supabase (Schema Unificado)
  * Escucha mensajes MQTT de los dispositivos y los almacena en Supabase
  *
+ * v2.3: Publica status de la RPi (KPBR0001) cada 60s via MQTT
  * v2.2: Registra cambios de IP en ip_history (JSONB) de devices
  * v2.1: sensor_readings usa device_id (TEXT) directamente como FK
  * v2.0: Mapeo de campos: weight→weight_grams, temp→temperature, hum→humidity
@@ -10,8 +11,12 @@
 require('dotenv').config();
 const mqtt = require('mqtt');
 const { createClient } = require('@supabase/supabase-js');
+const os = require('os');
+const { execSync } = require('child_process');
 
 // ============ CONFIGURACIÓN ============
+const BRIDGE_DEVICE_ID = 'KPBR0001';
+const BRIDGE_STATUS_INTERVAL_MS = 60000;
 const USE_WILDCARD = true;
 const DEVICES = ['KPCL0031', 'KPCL0033', 'KPCL0035', 'KPCL0036', 'KPCL0037', 'KPCL0038', 'KPCL0040', 'KPCL0041'];
 const DEVICE_PREFIX = 'KPCL';
@@ -48,7 +53,7 @@ const mqttOptions = {
 };
 
 console.log('=================================');
-console.log('   Kittypau Bridge v2.2');
+console.log('   Kittypau Bridge v2.3');
 console.log('=================================');
 console.log(`MQTT Broker: ${process.env.MQTT_BROKER}`);
 console.log(`Supabase: ${process.env.SUPABASE_URL}`);
@@ -245,6 +250,65 @@ async function appendIpHistory(deviceId, oldIp, ssid) {
     console.error(`[SUPABASE] Error guardando ip_history: ${error.message}`);
   }
 }
+
+// ============ RPi STATUS PUBLISHING ============
+
+function getRpiStatus() {
+  const cmd = (c) => { try { return execSync(c, { timeout: 5000 }).toString().trim(); } catch { return null; } };
+
+  const totalMem = Math.round(os.totalmem() / 1024 / 1024);
+  const freeMem = Math.round(os.freemem() / 1024 / 1024);
+  const usedMem = totalMem - freeMem;
+  const uptimeSec = os.uptime();
+
+  // WiFi SSID via nmcli
+  const ssid = cmd("nmcli -t -f active,ssid dev wifi | grep '^yes\\|^si' | cut -d: -f2");
+
+  // IP
+  const ip = cmd("hostname -I")?.split(' ')[0] || null;
+
+  // Disk usage
+  const diskLine = cmd("df -h / | tail -1");
+  const diskPct = diskLine ? parseInt(diskLine.split(/\s+/)[4]) : null;
+
+  // CPU temp (millidegrees)
+  const tempRaw = cmd("cat /sys/class/thermal/thermal_zone0/temp");
+  const cpuTemp = tempRaw ? parseFloat(tempRaw) / 1000 : null;
+
+  return {
+    device_id: BRIDGE_DEVICE_ID,
+    device_type: 'bridge',
+    device_model: 'Raspberry Pi Zero 2 W',
+    hostname: os.hostname(),
+    wifi_ssid: ssid,
+    wifi_ip: ip,
+    uptime_min: Math.round(uptimeSec / 60),
+    ram_used_mb: usedMem,
+    ram_total_mb: totalMem,
+    disk_used_pct: diskPct,
+    cpu_temp: cpuTemp,
+    bridge_status: 'active',
+    timestamp: new Date().toISOString()
+  };
+}
+
+function publishRpiStatus() {
+  if (!mqttClient.connected) return;
+  const status = getRpiStatus();
+  mqttClient.publish(`${BRIDGE_DEVICE_ID}/STATUS`, JSON.stringify(status), { qos: 0 }, (err) => {
+    if (err) {
+      console.error(`[RPi-STATUS] Error publicando: ${err.message}`);
+    } else {
+      console.log(`[RPi-STATUS] ${BRIDGE_DEVICE_ID} → ${status.wifi_ssid} | ${status.wifi_ip} | RAM ${status.ram_used_mb}/${status.ram_total_mb}MB | ${status.cpu_temp}°C`);
+    }
+  });
+}
+
+// Publicar status inmediatamente al conectar y luego cada 60s
+mqttClient.on('connect', () => {
+  setTimeout(publishRpiStatus, 3000);
+});
+setInterval(publishRpiStatus, BRIDGE_STATUS_INTERVAL_MS);
 
 // ============ GRACEFUL SHUTDOWN ============
 process.on('SIGINT', () => {
