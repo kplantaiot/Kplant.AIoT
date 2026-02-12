@@ -317,3 +317,126 @@ client.on('connect', () => {
 "
 ```
 **Nota**: ADDWIFI agrega la red a la lista pero no desconecta la conexion activa. REMOVEWIFI elimina de la lista pero tampoco desconecta. Se requiere reinicio fisico para que el dispositivo intente conectar a la nueva red.
+
+---
+
+## Calibracion HX711 (2026-02-11)
+
+### Procedimiento de calibracion remota via MQTT
+
+1. Vaciar el plato (sin carga)
+2. Enviar TARE: `{"command": "CALIBRATE_WEIGHT", "action": "tare"}`
+3. Colocar peso conocido (ej. 130g)
+4. Esperar siguiente lectura de SENSORS (~30s)
+5. Calcular factor: `nuevo_factor = factor_actual * (lectura / peso_real)`
+6. Enviar factor: `{"command": "CALIBRATE_WEIGHT", "action": "set_scale", "factor": XXXX}`
+7. Verificar siguiente lectura
+
+### Comando rapido (desde RPi)
+```bash
+ssh -i "C:/Users/Equipo/.ssh/kittypau_rpi" kittypau@192.168.1.90 'cd /home/kittypau/kittypau-bridge && node -e "
+const mqtt = require(\"mqtt\");
+const client = mqtt.connect(\"mqtts://cf8e2e9138234a86b5d9ff9332cfac63.s1.eu.hivemq.cloud:8883\", {
+  username: \"Kittypau1\", password: \"Kittypau1234\", protocolVersion: 5
+});
+client.on(\"connect\", () => {
+  client.publish(\"KPCLXXXX/cmd\", JSON.stringify({command:\"CALIBRATE_WEIGHT\", action:\"set_scale\", factor: XXXX}), {qos:1}, () => {
+    console.log(\"Enviado\"); client.end(); process.exit(0);
+  });
+});"'
+```
+
+### Dispositivos calibrados
+
+| Device | Factor anterior | Factor calibrado | Peso ref | Lectura verificada | Fecha |
+|--------|----------------|-----------------|----------|-------------------|-------|
+| KPCL0033 | 400.0 | 4301.0 | 130g | 130.05g | 2026-02-11 |
+
+### Notas
+- El factor se guarda en `/calibration.json` (LittleFS en ESP8266, SPIFFS en ESP32-CAM)
+- Persiste entre reinicios — no requiere reflashear
+- El factor por defecto en `config.h` se actualizo de 400.0 a 4301.0 para nuevos dispositivos
+- Cada celda HX711 tiene variacion individual, calibrar cada una por separado
+- `MAX_WEIGHT_G = 1000.0` clampea lecturas — si el factor es muy bajo, satura a 1000
+
+---
+
+## Actualizacion 2026-02-11 (sesion 2): Timestamp ISO 8601 + rangos DHT + MQTT Explorer
+
+### Fix timestamp ESP8266
+- El ESP32-CAM ya usaba formato ISO 8601 UTC (`%Y-%m-%dT%H:%M:%SZ` con `gmtime`)
+- El ESP8266 seguia con formato viejo (`%m-%d-%Y %H:%M:%S` con `localtime`)
+- **Corregido**: `firmware-esp8266/src/sensors.cpp` linea 68-69 actualizada a `gmtime` + ISO 8601
+- Ahora ambos firmwares usan el mismo formato: `2026-02-11T22:57:00Z`
+
+### Fix rangos de validacion DHT (temperatura y humedad)
+- Los rangos de validacion eran demasiado restrictivos y descartaban lecturas validas
+- Cuando una lectura excedia el rango, el firmware reportaba `ERR_DHT` y enviaba `null`
+- **Rangos anteriores**: temp 0-50°C, humedad 20-90%
+- **Rangos corregidos**: temp -10 a 120°C, humedad 0 a 100%
+- Archivos modificados:
+  - `firmware-esp8266/src/sensors.cpp` linea 99
+  - `firmware-esp32cam/src/sensors.cpp` linea 90
+
+### OTA aplicado (sesion 2)
+Todos los ESP8266 actualizados con ambos fixes (timestamp + rangos DHT):
+
+| Device | IP | Resultado |
+|--------|-----|-----------|
+| KPCL0033 | 192.168.1.88 | OK |
+| KPCL0034 | 192.168.1.85 | OK |
+| KPCL0035 | 192.168.1.93 | OK |
+| KPCL0037 | 192.168.1.89 | OK |
+| KPCL0038 | 192.168.1.92 | OK |
+
+ESP32-CAM (KPCL0040 y KPCL0041) ya tenian el fix de timestamp; el fix de rangos DHT requiere reflash por USB (no soportan OTA).
+
+### Formato MQTT para comandos desde MQTT Explorer
+Para enviar comandos manualmente desde MQTT Explorer, usar este formato:
+
+**Topic**: `KPCL0033/cmd` (minusculas)
+
+**Tare (poner a cero)**:
+```
+CALIBRATE_WEIGHT:tare
+```
+
+**Set scale (cambiar factor)**:
+```
+CALIBRATE_WEIGHT:set_scale:4301
+```
+
+**Nota**: El topic usa `cmd` en minusculas. El payload es texto plano con formato `COMANDO:accion[:valor]`, NO JSON.
+
+### Aprendizajes clave
+1. **ESP32-CAM no soporta OTA**: La tabla de particiones no incluye particion OTA. Requiere siempre flash por USB con base ESP32CAM-MB
+2. **El topic de comandos es en minusculas**: `KPCL0033/cmd` (no `CMD`)
+3. **El payload de comandos es texto plano**: `CALIBRATE_WEIGHT:tare` (no JSON)
+4. **Timestamp debe usar `gmtime` no `localtime`**: Para consistencia UTC en toda la plataforma
+5. **Rangos DHT demasiado estrictos causan perdida de datos**: El sensor puede reportar valores fuera de su rango nominal y siguen siendo utiles
+
+---
+
+## Tareas Pendientes
+
+### 1. Calibracion de celda de carga (HX711) - Dispositivos restantes
+- KPCL0033: **calibrado** (factor 4301)
+- KPCL0034: pendiente (reporta `weight: null` — HX711 no detectado?)
+- KPCL0035: pendiente
+- KPCL0037: pendiente
+- KPCL0038: pendiente
+- KPCL0040: pendiente (ESP32-CAM, reporta `ERR_HX711`)
+- KPCL0041: pendiente (ESP32-CAM, reporta `ERR_HX711`)
+- KPCL0036: pendiente (firmware viejo, requiere acceso fisico)
+
+### 2. ESP32-CAM: Red neuronal para identificacion de objetos
+- Implementar modelo de inferencia en ESP32-CAM para detectar/identificar objetos (ej. mascota, plato, comida)
+- Evaluar opciones: TensorFlow Lite Micro, Edge Impulse, modelo custom
+- Considerar limitaciones de memoria del ESP32 (~520KB SRAM, ~4MB flash)
+- Posible enfoque: captura de imagen + envio a servidor para inferencia (vs. inferencia on-device)
+- Integrar resultado de deteccion en el payload MQTT (nuevo campo o topic dedicado)
+
+### 3. KPCL0036 - Actualizacion de firmware pendiente
+- Requiere acceso fisico (USB) para flashear firmware actualizado
+- Firmware actual no incluye: `device_type`, `device_model`, `wifi_ip` en STATUS
+- Ubicado en red Suarez_Mujica_891 (fuera de LAN de desarrollo)

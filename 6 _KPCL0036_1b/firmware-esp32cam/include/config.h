@@ -73,7 +73,7 @@
 // 4. Coloca un objeto de peso conocido (ej. 100g) y obtén la nueva lectura
 // 5. Calcula: factor = (lectura_con_peso - lectura_sin_peso) / peso_conocido_en_gramos
 // 6. Coloca el factor calculado aqui
-#define HX711_CALIBRATION_FACTOR 400.0f
+#define HX711_CALIBRATION_FACTOR 4301.0f
 #define WEIGHT_DEADBAND          2.0f     // Cambio minimo en gramos para reportar nuevo peso
 
 // Archivo de calibracion

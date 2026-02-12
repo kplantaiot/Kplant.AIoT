@@ -58,8 +58,8 @@ String sensorsReadAndPublish() {
     struct tm * timeinfo;
     char timestamp_str[20];
     time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    strftime(timestamp_str, sizeof(timestamp_str), "%m-%d-%Y %H:%M:%S", timeinfo);
+    timeinfo = gmtime(&rawtime);
+    strftime(timestamp_str, sizeof(timestamp_str), "%Y-%m-%dT%H:%M:%SZ", timeinfo);
     doc["timestamp"] = timestamp_str;
 
     // --- Lectura HX711 (Peso) ---
@@ -87,7 +87,7 @@ String sensorsReadAndPublish() {
     float temp = dht.readTemperature();
     float hum = dht.readHumidity();
 
-    if (isnan(temp) || isnan(hum) || temp < 0.0f || temp > 50.0f || hum < 20.0f || hum > 90.0f) {
+    if (isnan(temp) || isnan(hum) || temp < -10.0f || temp > 120.0f || hum < 0.0f || hum > 100.0f) {
         if (sensor_health_status == "OK") {
             sensor_health_status = "ERR_DHT";
         }
