@@ -1,5 +1,5 @@
-// wifi_manager.cpp
-// Gestión de WiFi y credenciales usando LittleFS
+﻿// wifi_manager.cpp
+// GestiÃ³n de WiFi y credenciales usando LittleFS
 #include "wifi_manager.h"
 #include "config.h"
 #include "led_indicator.h" // Incluir led_indicator para usar las funciones del LED
@@ -21,25 +21,39 @@ static std::vector<WifiCredential> knownNetworks;
 static bool wifiConnected = false;
 static String lastSuccessfulSSID = "";
 
+static void addDefaultNetworkUnique(const char* ssid, const char* pass) {
+    for (const auto& cred : knownNetworks) {
+        if (cred.ssid == ssid) return;
+    }
+    knownNetworks.push_back({ssid, pass});
+}
+
+
 void loadWifiCredentials() {
     knownNetworks.clear();
-    if (!LittleFS.exists(WIFI_CRED_FILE)) {
-        // Redes WiFi por defecto para dispositivos nuevos
-        knownNetworks.push_back({WIFI_SSID, WIFI_PASS});
-        knownNetworks.push_back({"Casa 15", "mateo916"});
-        knownNetworks.push_back({"Suarez_Mujica_891", "SuarezMujica891"});
-        return;
-    }
-    File f = LittleFS.open(WIFI_CRED_FILE, "r");
-    if (!f) return;
-    DynamicJsonDocument doc(512);
-    DeserializationError err = deserializeJson(doc, f);
-    if (!err) {
-        for (JsonObject obj : doc.as<JsonArray>()) {
-            knownNetworks.push_back({obj["ssid"].as<String>(), obj["pass"].as<String>()});
+
+    // 1. Siempre cargar las redes hardcoded (garantiza conectividad base)
+    addDefaultNetworkUnique(WIFI_SSID, WIFI_PASS);
+    addDefaultNetworkUnique("Jeivos", "jdayne212");
+    addDefaultNetworkUnique("Casa 15", "mateo916");
+    addDefaultNetworkUnique("Suarez_Mujica_891", "SuarezMujica891");
+    addDefaultNetworkUnique("Mauro", "mauro1234");
+    addDefaultNetworkUnique("VTR-2736410_2g", "wp8Fjtwyydhq");
+
+    // 2. Mergear redes guardadas en LittleFS (agregadas via ADDWIFI)
+    if (LittleFS.exists(WIFI_CRED_FILE)) {
+        File f = LittleFS.open(WIFI_CRED_FILE, "r");
+        if (f) {
+            DynamicJsonDocument doc(512);
+            DeserializationError err = deserializeJson(doc, f);
+            if (!err) {
+                for (JsonObject obj : doc.as<JsonArray>()) {
+                    addDefaultNetworkUnique(obj["ssid"].as<const char*>(), obj["pass"].as<const char*>());
+                }
+            }
+            f.close();
         }
     }
-    f.close();
 }
 
 void saveWifiCredentials() {
@@ -57,7 +71,7 @@ void saveWifiCredentials() {
     }
 }
 
-// Guardar última red WiFi exitosa
+// Guardar Ãºltima red WiFi exitosa
 void saveLastSuccessfulSSID(const String& ssid) {
     File f = LittleFS.open(LAST_WIFI_FILE, "w");
     if (f) {
@@ -66,7 +80,7 @@ void saveLastSuccessfulSSID(const String& ssid) {
     }
 }
 
-// Cargar última red WiFi exitosa
+// Cargar Ãºltima red WiFi exitosa
 String loadLastSuccessfulSSID() {
     if (!LittleFS.exists(LAST_WIFI_FILE)) return "";
     File f = LittleFS.open(LAST_WIFI_FILE, "r");
@@ -85,7 +99,7 @@ WifiCredential* findCredentialBySSID(const String& ssid) {
     return nullptr;
 }
 
-// Intentar conectar a una red específica
+// Intentar conectar a una red especÃ­fica
 bool tryConnectToNetwork(const String& ssid, const String& pass) {
     Serial.print("Intentando conectar a: ");
     Serial.println(ssid);
@@ -122,18 +136,18 @@ void wifiManagerInit() {
     printKnownNetworks();
 
     if (lastSuccessfulSSID.length() > 0) {
-        Serial.print("Última red exitosa: ");
+        Serial.print("Ãšltima red exitosa: ");
         Serial.println(lastSuccessfulSSID);
     }
 
     WiFi.mode(WIFI_STA);
     startWifiBlink();
 
-    // 1. Si hay última red exitosa, intentarla PRIMERO (sin escanear)
+    // 1. Si hay Ãºltima red exitosa, intentarla PRIMERO (sin escanear)
     if (lastSuccessfulSSID.length() > 0) {
         WifiCredential* lastCred = findCredentialBySSID(lastSuccessfulSSID);
         if (lastCred && tryConnectToNetwork(lastCred->ssid, lastCred->pass)) {
-            return;  // Conectado a última red exitosa
+            return;  // Conectado a Ãºltima red exitosa
         }
     }
 
@@ -143,10 +157,10 @@ void wifiManagerInit() {
     Serial.print("Redes encontradas: ");
     Serial.println(numNetworks);
 
-    // 3. Intentar solo redes que están visibles Y conocidas
+    // 3. Intentar solo redes que estÃ¡n visibles Y conocidas
     for (int i = 0; i < numNetworks && !wifiConnected; i++) {
         String scannedSSID = WiFi.SSID(i);
-        // Saltar la última red exitosa (ya la intentamos)
+        // Saltar la Ãºltima red exitosa (ya la intentamos)
         if (scannedSSID == lastSuccessfulSSID) continue;
 
         WifiCredential* cred = findCredentialBySSID(scannedSSID);
@@ -161,7 +175,7 @@ void wifiManagerInit() {
     }
     WiFi.scanDelete();
 
-    // 4. Si aún no conectado, mensaje final
+    // 4. Si aÃºn no conectado, mensaje final
     if (!wifiConnected) {
         Serial.println("No se pudo conectar a ninguna red WiFi visible.");
         stopWifiBlink();
@@ -172,11 +186,11 @@ void wifiManagerLoop() {
     if (WiFi.status() != WL_CONNECTED) {
         if (wifiConnected) {
             wifiConnected = false;
-            Serial.println("Conexión WiFi perdida. Intentando reconectar...");
+            Serial.println("ConexiÃ³n WiFi perdida. Intentando reconectar...");
             startWifiBlink();
         }
 
-        // 1. Intentar última red exitosa primero
+        // 1. Intentar Ãºltima red exitosa primero
         if (lastSuccessfulSSID.length() > 0) {
             WifiCredential* lastCred = findCredentialBySSID(lastSuccessfulSSID);
             if (lastCred && tryConnectToNetwork(lastCred->ssid, lastCred->pass)) {
@@ -203,7 +217,7 @@ void wifiManagerLoop() {
         }
     } else {
         if (!wifiConnected) {
-            // Conexión establecida (posiblemente tardía)
+            // ConexiÃ³n establecida (posiblemente tardÃ­a)
             wifiConnected = true;
             lastSuccessfulSSID = WiFi.SSID();
             saveLastSuccessfulSSID(lastSuccessfulSSID);
@@ -266,4 +280,8 @@ void printKnownNetworks() {
     }
     Serial.println("--------------------------");
 }
+
+
+
+
 

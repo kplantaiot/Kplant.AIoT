@@ -1,4 +1,4 @@
-// wifi_manager.cpp
+﻿// wifi_manager.cpp
 // Gestion de WiFi y credenciales usando SPIFFS (ESP32)
 #include "wifi_manager.h"
 #include "config.h"
@@ -16,6 +16,14 @@ struct WifiCredential {
 
 static std::vector<WifiCredential> knownNetworks;
 static bool wifiConnected = false;
+
+static void addDefaultNetworkUnique(const char* ssid, const char* pass) {
+    for (const auto& cred : knownNetworks) {
+        if (cred.ssid == ssid) return;
+    }
+    knownNetworks.push_back({ssid, pass});
+}
+
 
 // Maquina de estados para reconexion no-bloqueante
 enum WifiReconnectState {
@@ -35,20 +43,29 @@ static unsigned long cooldownMillis = 0;
 
 void loadWifiCredentials() {
     knownNetworks.clear();
-    if (!SPIFFS.exists(WIFI_CRED_FILE)) {
-        knownNetworks.push_back({WIFI_SSID, WIFI_PASS});
-        return;
-    }
-    File f = SPIFFS.open(WIFI_CRED_FILE, "r");
-    if (!f) return;
-    StaticJsonDocument<512> doc;
-    DeserializationError err = deserializeJson(doc, f);
-    if (!err) {
-        for (JsonObject obj : doc.as<JsonArray>()) {
-            knownNetworks.push_back({obj["ssid"].as<String>(), obj["pass"].as<String>()});
+
+    // 1. Siempre cargar las redes hardcoded (garantiza conectividad base)
+    addDefaultNetworkUnique(WIFI_SSID, WIFI_PASS);
+    addDefaultNetworkUnique("Jeivos", "jdayne212");
+    addDefaultNetworkUnique("Casa 15", "mateo916");
+    addDefaultNetworkUnique("Suarez_Mujica_891", "SuarezMujica891");
+    addDefaultNetworkUnique("Mauro", "mauro1234");
+    addDefaultNetworkUnique("VTR-2736410_2g", "wp8Fjtwyydhq");
+
+    // 2. Mergear redes guardadas en SPIFFS (agregadas via ADDWIFI)
+    if (SPIFFS.exists(WIFI_CRED_FILE)) {
+        File f = SPIFFS.open(WIFI_CRED_FILE, "r");
+        if (f) {
+            StaticJsonDocument<512> doc;
+            DeserializationError err = deserializeJson(doc, f);
+            if (!err) {
+                for (JsonObject obj : doc.as<JsonArray>()) {
+                    addDefaultNetworkUnique(obj["ssid"].as<const char*>(), obj["pass"].as<const char*>());
+                }
+            }
+            f.close();
         }
     }
-    f.close();
 }
 
 void saveWifiCredentials() {
@@ -233,3 +250,7 @@ void printKnownNetworks() {
     }
     Serial.println("--------------------------");
 }
+
+
+
+

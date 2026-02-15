@@ -5,7 +5,7 @@
 #define FIRMWARE_VERSION "1.0.0"
 
 // ==================== DEVICE CONFIGURATION ====================
-#define DEVICE_ID      "KPCL0041"
+#define DEVICE_ID      "KPCL0040"
 #define DEVICE_TYPE    "comedero_cam"           // Funcion: "comedero_cam", "bebedero_cam"
 #define DEVICE_MODEL   "AI-Thinker ESP32-CAM"   // Modelo de placa electronica
 
