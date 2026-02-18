@@ -91,7 +91,7 @@ mqttClient.on('message', async (topic, message) => {
   try {
     const [deviceId, type] = topic.split('/');
 
-    if (USE_WILDCARD && DEVICE_PREFIX && !deviceId.startsWith(DEVICE_PREFIX)) {
+    if (USE_WILDCARD && DEVICE_PREFIX && !deviceId.startsWith(DEVICE_PREFIX) && deviceId !== BRIDGE_DEVICE_ID) {
       return;
     }
 
