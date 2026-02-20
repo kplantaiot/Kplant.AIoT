@@ -26,6 +26,24 @@
 3. Realtime en dashboard (suscripcion a sensor_readings).
 4. Pop-up de registro con progreso (Usuario -> Mascota -> Dispositivo).
 
+## Mejoras Firmware — Pendientes (2026-02-20)
+
+### CRITICO (seguridad activa)
+- [ ] **FW-01** ESP32-CAM: reemplazar `setInsecure()` con certificado ISRG Root X1 (igual que ESP8266). Ambos deben validar TLS.
+- [ ] **FW-02** MQTT: crear usuario por device en HiveMQ Cloud (KPCL0038, KPCL0040, etc.) con ACL restringida a sus propios topics. Hoy todos comparten `Kittypau1/Kittypau1234`.
+- [ ] **FW-03** WiFi: extraer credentials hardcodeadas del binario. Implementar modo provisioning: AP captive portal en primer arranque sin credenciales guardadas.
+
+### Alta (confiabilidad)
+- [ ] **FW-04** Reemplazar DHT11 por DHT22/AM2302 en hardware. Misma librería/pin, precision ±0.5°C vs ±2°C. Reduce errores NaN frecuentes.
+- [ ] **FW-05** ESP8266: corregir curva LDR de lineal a logarítmica, o reemplazar por BH1750 (I2C, lux reales sin calibración).
+- [ ] **FW-06** Ambos: agregar contador de reinicios persistente (`/boot_count.json`) publicado en STATUS para detectar crash loops desde Supabase.
+
+### Media (mantenibilidad)
+- [ ] **FW-07** ESP32-CAM: mover HTML de UI (4KB string embebido en `camera_manager.cpp`) a archivo en SPIFFS (`/www/index.html`). Permite actualizar UI sin recompilar.
+- [ ] **FW-08** Ambos: mover timezone a constante en `config.h` con comentario explicativo. Actualmente string mágico hardcodeado en `mqtt_manager.cpp`.
+- [ ] **FW-09** ESP32-CAM: limitar frame rate del stream MJPEG (~10fps). Sin límite puede saturar el AP y bloquear loop MQTT.
+- [ ] **FW-10** ESP32-CAM: manejar overflow de capturas explícitamente (buffer circular o respuesta JSON de error en `/save`). Hoy falla silencioso al llegar a 50 archivos.
+
 ## Arquitectura actual (2026-02-15)
 ```
 ESP8266/ESP32-CAM -> MQTT (HiveMQ TLS) -> RPi Bridge v2.4 -> Supabase (directo)
