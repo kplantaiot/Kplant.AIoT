@@ -1,7 +1,8 @@
 /**
- * Kittypau Bridge v2.2 - MQTT to Supabase (Schema Unificado)
+ * Kittypau Bridge v2.4 - MQTT to Supabase (Schema Unificado)
  * Escucha mensajes MQTT de los dispositivos y los almacena en Supabase
  *
+ * v2.4: Upsert bridge_heartbeats y bridge_status_live con cada STATUS de KPBR0001
  * v2.3: Publica status de la RPi (KPBR0001) cada 60s via MQTT
  * v2.2: Registra cambios de IP en ip_history (JSONB) de devices
  * v2.1: sensor_readings usa device_id (TEXT) directamente como FK
@@ -53,7 +54,7 @@ const mqttOptions = {
 };
 
 console.log('=================================');
-console.log('   Kittypau Bridge v2.3');
+console.log('   Kittypau Bridge v2.4');
 console.log('=================================');
 console.log(`MQTT Broker: ${process.env.MQTT_BROKER}`);
 console.log(`Supabase: ${process.env.SUPABASE_URL}`);
@@ -107,6 +108,9 @@ mqttClient.on('message', async (topic, message) => {
       await handleSensorData(deviceId, data);
     } else if (type === 'STATUS') {
       await handleStatusData(deviceId, data);
+      if (deviceId === BRIDGE_DEVICE_ID) {
+        await updateBridgeTables(data);
+      }
     }
   } catch (err) {
     console.error(`[ERROR] Procesando mensaje: ${err.message}`);
@@ -203,7 +207,8 @@ async function handleStatusData(deviceId, data) {
   // Actualiza campos IoT directamente por device_id (sin UUID)
   // Evita sobreescribir con null si el firmware antiguo no envía ciertos campos.
   const updateFields = {
-    last_seen: new Date().toISOString()
+    last_seen: new Date().toISOString(),
+    device_state: 'linked'
   };
 
   if (data.wifi_status !== undefined) updateFields.wifi_status = data.wifi_status;
@@ -248,6 +253,39 @@ async function appendIpHistory(deviceId, oldIp, ssid) {
 
   if (error) {
     console.error(`[SUPABASE] Error guardando ip_history: ${error.message}`);
+  }
+}
+
+// ============ BRIDGE TABLES UPDATE ============
+
+async function updateBridgeTables(data) {
+  const now = new Date().toISOString();
+
+  // Upsert bridge_heartbeats (incluye telemetria completa)
+  // bridge_status_live es una VIEW sobre esta tabla
+  const { error } = await supabase
+    .from('bridge_heartbeats')
+    .upsert({
+      bridge_id: BRIDGE_DEVICE_ID,
+      ip: data.wifi_ip ?? null,
+      uptime_sec: (data.uptime_min ?? 0) * 60,
+      mqtt_connected: true,
+      last_mqtt_at: now,
+      last_seen: now,
+      device_type: data.device_type ?? 'bridge',
+      device_model: data.device_model ?? null,
+      hostname: data.hostname ?? null,
+      wifi_ssid: data.wifi_ssid ?? null,
+      ram_used_mb: data.ram_used_mb ?? null,
+      ram_total_mb: data.ram_total_mb ?? null,
+      disk_used_pct: data.disk_used_pct ?? null,
+      cpu_temp: data.cpu_temp ?? null
+    }, { onConflict: 'bridge_id' });
+
+  if (error) {
+    console.error(`[SUPABASE] Error bridge_heartbeats: ${error.message}`);
+  } else {
+    console.log(`[SUPABASE] ✓ Bridge heartbeat actualizado`);
   }
 }
 

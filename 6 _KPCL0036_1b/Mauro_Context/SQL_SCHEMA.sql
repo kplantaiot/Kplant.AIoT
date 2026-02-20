@@ -67,7 +67,7 @@ create table if not exists public.devices (
   owner_id uuid not null references public.profiles(id) on delete cascade,
   pet_id uuid not null references public.pets(id) on delete restrict,
   device_id text not null unique,
-  device_type text not null check (device_type in ('food_bowl','water_bowl')),
+  device_type text check (device_type in ('comedero','bebedero','comedero_cam','bebedero_cam','bridge')),
   status text not null default 'active' check (status in ('active','inactive','maintenance')),
   device_state text default 'factory' check (device_state in ('factory','claimed','linked','offline','lost','error')),
   battery_level int,
@@ -321,7 +321,7 @@ BEGIN
   ) THEN
     ALTER TABLE public.devices
       ADD CONSTRAINT devices_device_id_format_check
-      CHECK (device_id ~ '^KPCL\d{4}$');
+      CHECK (device_id ~ '^KP(CL|BR)\d{4}$');
   END IF;
 
   IF NOT EXISTS (
