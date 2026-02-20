@@ -18,7 +18,11 @@
       "Bash(curl:*)",
       "Bash(~/.platformio/penv/Scripts/platformio.exe run -e ota --target upload)",
       "Bash(pio run:*)",
-      "Bash(C:UsersEquipo.platformiopackagestool-esptoolpyesptool.py --port COM8 erase_flash)"
+      "Bash(C:UsersEquipo.platformiopackagestool-esptoolpyesptool.py --port COM8 erase_flash)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

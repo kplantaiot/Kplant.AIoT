@@ -24,3 +24,12 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Archived old project versions
+Superados/
+
+# Windows reserved names
+nul
+
+# Claude Code local settings
+.claude/

@@ -161,7 +161,7 @@ export function DeviceCharts({ readings, deviceId }: ChartsProps) {
                     if (payload?.[0]?.payload?.fullTime) return payload[0].payload.fullTime
                     return ""
                   }}
-                  formatter={(value: number) => [`${value}g`, "Peso"]}
+                  formatter={((value: unknown) => [`${value}g`, "Peso"]) as never}
                 />
                 <defs>
                   <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
