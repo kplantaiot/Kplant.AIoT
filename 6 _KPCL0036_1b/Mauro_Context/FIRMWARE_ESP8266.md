@@ -2,12 +2,12 @@
 
 ## Informacion general
 - **Proyecto**: Kittypau IoT
-- **Version**: 1.0.0
+- **Version actual**: 1.1.0
 - **Plataforma**: ESP8266 (NodeMCU v2)
 - **Framework**: Arduino (via PlatformIO)
 - **Lenguaje**: C++
 - **Filesystem**: LittleFS (para credenciales WiFi y calibracion)
-- **Ruta de firmware activa**: `c:\Kittypau\firmware-esp8266`
+- **Ruta de firmware**: `c:\Kittypau\6 _KPCL0036_1b\firmware-esp8266`
 
 ---
 
@@ -121,9 +121,16 @@ platformio.ini          # Configuracion de build PlatformIO
 
 Para agregar un nuevo dispositivo: cambiar `DEVICE_ID` y reflashear.
 
+## Cambios v1.1 (2026-02-14)
+- WiFi credential loading normalizado: siempre carga redes hardcoded + merge desde filesystem (LittleFS).
+- 6 redes WiFi hardcoded en config.h (Jeivos, Casa 15, Suarez_Mujica_891, Mauro, VTR-2736410_2g).
+- Correccion de DEVICE_ID en config.h (KPCL0038->KPCL0035, KPCL0041->KPCL0040).
+- Timestamps en formato ISO 8601 UTC.
+- Sensor de luz reporta objeto `light` con `raw`, `lux`, `%`, `condition`.
+
 ## WiFi conocidas (data/wifi.json)
 
-Archivo unificado en `c:\Kittypau\firmware-esp8266\data\wifi.json`:
+Archivo unificado en `c:\Kittypau\6 _KPCL0036_1b\firmware-esp8266\data\wifi.json`:
 
 ```
 Jeivos
@@ -186,7 +193,7 @@ board_build.filesystem = littlefs
 
 ```bash
 # USB (ejemplo COM7)
-cd c:\Kittypau\firmware-esp8266
+cd "c:\Kittypau\6 _KPCL0036_1b\firmware-esp8266"
 pio run -e nodemcuv2 -t upload --upload-port COM7
 
 # OTA (mismo WiFi, IP del dispositivo)

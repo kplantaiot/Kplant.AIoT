@@ -26,26 +26,28 @@ Tener un MVP funcional donde el usuario:
 
 ## Diagrama de alto nivel
 ```
-ESP32 -> HiveMQ -> Raspberry Bridge -> /api/mqtt/webhook -> Supabase (DB)
-                                                    \-> Realtime -> App Web
+ESP8266/ESP32-CAM -> HiveMQ Cloud (TLS) -> RPi Bridge v2.4 -> Supabase (directo)
+                                                                    |
+                                                             App Web (Vercel)
 ```
 
 ---
 
 ## Regla de conexion (importante)
 - **La app web NO se conecta a HiveMQ**.
-- **La Raspberry (bridge) SI se conecta a HiveMQ** y reenvia a Vercel.
+- **La Raspberry (bridge) SI se conecta a HiveMQ** y escribe directamente a Supabase.
 - **La app web solo consume Supabase** (Auth + DB + Realtime).
+- **El bridge NO pasa por `/api/mqtt/webhook`**. Usa `service_role` key para bypass de RLS.
 
 Esto evita exponer credenciales MQTT en frontend y mantiene el flujo seguro.
 
 ---
 
 ## Flujo de datos (telemetria)
-1. ESP32 publica MQTT en HiveMQ.
-2. Raspberry Bridge escucha MQTT y reenvia a Vercel.
-3. API valida el token y guarda lectura en Supabase.
-4. Supabase Realtime actualiza el dashboard.
+1. ESP8266/ESP32-CAM publica MQTT en HiveMQ (`+/SENSORS`, `+/STATUS`).
+2. RPi Bridge escucha MQTT y escribe directamente a Supabase.
+3. Bridge inserta en `sensor_readings`, actualiza `devices`, upsert `bridge_heartbeats`.
+4. App web consulta Supabase (server components y/o Realtime).
 
 ## Registro de dispositivo (paso esencial)
 - El usuario escanea el QR en la parte inferior del plato.
@@ -55,26 +57,15 @@ Esto evita exponer credenciales MQTT en frontend y mantiene el flujo seguro.
 ---
 
 ## Diagramas detallados
-### Local (desarrollo)
+### Produccion (actual)
 ```
-ESP32 (LAN) -> HiveMQ Cloud
-                 |
-          Webhook -> http://localhost:3000/api/mqtt/webhook
-                 |
-             Supabase (DB + Realtime)
-                 |
-             App Web (localhost:3000)
-```
-
-### Produccion (Vercel)
-```
-ESP32 -> HiveMQ Cloud
-           |
-     https://tu-app.vercel.app/api/mqtt/webhook
-           |
-       Supabase (DB + Realtime)
-           |
-       App Web (Vercel)
+ESP8266/ESP32-CAM -> HiveMQ Cloud (TLS:8883)
+                        |
+                  RPi Bridge v2.4 (service_role)
+                        |
+                  Supabase (DB + Realtime)
+                        |
+                  App Web (Vercel)
 ```
 
 ---
@@ -209,19 +200,16 @@ El deploy incluye:
 
 ---
 
-## Estado actual (hasta 2026-02-03)
-- Next.js creado en `kittypau_app/` con TypeScript y App Router.
-- Endpoint webhook creado en `src/app/api/mqtt/webhook/route.ts`.
-- Cliente Supabase server creado en `src/lib/supabase/server.ts`.
-- Script de prueba creado en `scripts/test-webhook.ps1`.
-- `.env.local` creado en `kittypau_app/`.
-- Webhook local probado con exito (respuesta `success: true`).
+## Estado actual (2026-02-15)
+- Next.js desplegado en Vercel (`kittypau-app/`).
+- Bridge v2.4 corriendo 24/7 en RPi, escribe directo a Supabase.
+- Firmware v1.1 en dispositivos activos (KPCL0035, 0038, 0040).
+- Ver `ESTADO_AVANCE.md` para detalle completo.
 
 ---
 
 ## Pendientes inmediatos
-- Crear y poblar `pets` y `devices` desde la app.
-- Crear UI base (login, mascotas, dispositivos, dashboard).
-- Configurar deploy en Vercel.
-- Configurar webhook en HiveMQ con URL publica.
-- Verificar Realtime en dashboard.
+- Flashear firmware v1.1 a dispositivos pendientes (KPCL0033, 0034, 0037, 0031, 0036).
+- Aplicar Design Tokens + componentes base.
+- Realtime en dashboard (suscripcion a sensor_readings).
+- Pop-up de registro con progreso.

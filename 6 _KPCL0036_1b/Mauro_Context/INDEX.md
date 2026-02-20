@@ -1,63 +1,77 @@
-﻿# Índice de Documentación (Kittypau)
+﻿# Indice de Documentacion (Kittypau)
 
 ## Plan y estado
-- `Docs/PLAN_PROYECTO_KITTYPAU.md`
-- `Docs/ESTADO_AVANCE.md`
-- `Docs/NOTAS_IMPLEMENTACION.md`
-- `Docs/MAPA_ECOSISTEMA.md`
-- `Docs/PLAN_IMPLEMENTACION.md`
-- `Docs/CIBERSEGURIDAD.md`
+- `PLAN_PROYECTO_KITTYPAU.md`
+- `ESTADO_AVANCE.md` (actualizado 2026-02-15)
+- `NOTAS_IMPLEMENTACION.md`
+- `MAPA_ECOSISTEMA.md`
+- `PLAN_IMPLEMENTACION.md`
+- `CIBERSEGURIDAD.md`
+- `EVALUACION_PROYECTO.md`
 
 ## Arquitectura
-- `Docs/ARQUITECTURA_PROYECTO.md`
-- `Docs/ARQUITECTURA_COMPLETA.md`
-- `Docs/DIAGRAMA_ARQUITECTURA_ACTUAL.md`
+- `ARQUITECTURA_PROYECTO.md`
+- `ARQUITECTURA_COMPLETA.md` (actualizado 2026-02-15)
+- `DIAGRAMA_ARQUITECTURA_ACTUAL.md` (actualizado 2026-02-15)
 
 ## Dominio y reglas
-- `Docs/DOC_MAESTRO_DOMINIO.md`
-- `Docs/PLAN_SQL_ESTRUCTURA.md`
-- `Docs/CONTRATOS_POR_VISTA.md`
-- `Docs/ENUMS_OFICIALES.md`
-- `Docs/REGLAS_INTERPRETACION_IOT.md`
+- `DOC_MAESTRO_DOMINIO.md`
+- `PLAN_SQL_ESTRUCTURA.md`
+- `CONTRATOS_POR_VISTA.md`
+- `ENUMS_OFICIALES.md`
+- `REGLAS_INTERPRETACION_IOT.md`
 
 ## Base de datos
-- `Docs/SQL_SCHEMA.sql`
-- `Docs/GUIA_SQL_SUPABASE.md`
-- `Docs/GUIA_MIGRACION_SQL.md`
-- `Docs/CLEANUP_SQL.sql`
+- `SQL_SCHEMA.sql` (actualizado 2026-02-15)
+- `GUIA_SQL_SUPABASE.md`
+- `GUIA_MIGRACION_SQL.md`
+- `CLEANUP_SQL.sql`
+- `NOTA_SCHEMAS_SQL.md`
+- `SQL_ASSERTS.md`
 
 ## APIs y backend
-- `Docs/FRONT_BACK_APIS.md`
+- `FRONT_BACK_APIS.md`
+- `POSTMAN_COLLECTION.md`
+- `VISTAS_APP.md`
 
 ## Flujos UX
-- `Docs/FLUJO_REGISTRO_DISPOSITIVO.md`
-- `Docs/IMAGENES_LOGIN.md`
-- `Docs/estilos y diseños.md`
+- `FLUJO_REGISTRO_DISPOSITIVO.md`
+- `IMAGENES_LOGIN.md`
+- `POPUP_REGISTRO_SPEC.md`
+- `estilos y disenos.md`
 
 ## Deploy
-- `Docs/CHECKLIST_DEPLOY.md`
+- `CHECKLIST_DEPLOY.md`
 
 ## CLI
-- `Docs/VERCEL_CLI.md`
-- `Docs/SUPABASE_CLI.md`
-- `Docs/HIVEMQ_MQTT_CLI.md`
-- `Docs/RASPBERRY_CLI.md`
+- `VERCEL_CLI.md`
+- `SUPABASE_CLI.md`
+- `HIVEMQ_MQTT_CLI.md`
+- `RASPBERRY_CLI.md`
 
-## Infraestructura Edge
-- `Docs/RASPBERRY_BRIDGE.md`
-- `Docs/TOPICOS_MQTT.md`
+## Infraestructura Edge (IoT)
+- `RASPBERRY_BRIDGE.md` (actualizado 2026-02-15)
+- `RASPBERRY_BRIDGE_SETUP.md`
+- `RESUMEN_RASPBERRY_SUPABASE.md`
+- `TOPICOS_MQTT.md` (actualizado 2026-02-15)
+- `CREDENCIALES_TEMPLATE.md`
+
+## Firmware
+- `FIRMWARE_ESP8266.md` (actualizado 2026-02-15)
+- `MANUAL_CARGA_FIRMWARE.md`
+- `BUENAS_PRACTICAS_FIRMWARE.md`
+- `OTA_ESP32CAM_DIAGNOSTICO.md`
+- `REGISTRO_FIRMWARES.md` (actualizado 2026-02-15)
+- `GUIA_DECISION.md`
 
 ## Pruebas
-- `Docs/PRUEBAS_E2E.md`
-- `Docs/AUTOMATIZACION_TESTS.md`
-
-
-
+- `PRUEBAS_E2E.md`
+- `AUTOMATIZACION_TESTS.md`
 
 ## Scripts
-- Docs/TEST_DB_API.ps1
+- `TEST_DB_API.ps1`
+- `TEST_ONBOARDING_BACKEND.ps1`
 
-- Docs/TEST_ONBOARDING_BACKEND.ps1
-
-- Docs/.env.test.example
-- Docs/.env.test.local (no versionado)
+## Entorno
+- `.env.test.example`
+- `.env.test.local` (no versionado)
