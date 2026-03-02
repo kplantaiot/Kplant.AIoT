@@ -38,7 +38,7 @@ static int currentNetworkIndex = 0;
 static unsigned long reconnectStartMillis = 0;
 static unsigned long cooldownMillis = 0;
 
-#define WIFI_CONNECT_TIMEOUT 8000
+#define WIFI_CONNECT_TIMEOUT 12000
 #define WIFI_COOLDOWN_TIME   5000
 
 void loadWifiCredentials() {
@@ -102,7 +102,9 @@ void wifiManagerInit() {
     for (auto &cred : knownNetworks) {
         Serial.print("Intentando conectar a: ");
         Serial.println(cred.ssid);
-        WiFi.disconnect(true);
+        WiFi.disconnect(false);  // Mantiene el radio activo
+        delay(150);
+        WiFi.mode(WIFI_STA);
         WiFi.begin(cred.ssid.c_str(), cred.pass.c_str());
         unsigned long start = millis();
         while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_CONNECT_TIMEOUT) {
@@ -169,7 +171,9 @@ void wifiManagerLoop() {
             }
             Serial.print("Intentando: ");
             Serial.println(knownNetworks[currentNetworkIndex].ssid);
-            WiFi.disconnect(true);
+            WiFi.disconnect(false);  // Mantiene el radio activo
+            delay(150);
+            WiFi.mode(WIFI_STA);
             WiFi.begin(
                 knownNetworks[currentNetworkIndex].ssid.c_str(),
                 knownNetworks[currentNetworkIndex].pass.c_str()

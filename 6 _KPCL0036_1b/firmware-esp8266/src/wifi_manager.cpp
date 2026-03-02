@@ -14,7 +14,7 @@ struct WifiCredential {
 
 #define WIFI_CRED_FILE "/wifi.json"
 #define LAST_WIFI_FILE "/last_wifi.txt"
-#define WIFI_CONNECT_TIMEOUT 5000  // 5 segundos (antes 8)
+#define WIFI_CONNECT_TIMEOUT 12000  // 12 segundos (más tiempo para radio post-reboot)
 #include <ArduinoJson.h>
 
 static std::vector<WifiCredential> knownNetworks;
@@ -103,7 +103,9 @@ WifiCredential* findCredentialBySSID(const String& ssid) {
 bool tryConnectToNetwork(const String& ssid, const String& pass) {
     Serial.print("Intentando conectar a: ");
     Serial.println(ssid);
-    WiFi.disconnect(true);
+    WiFi.disconnect(false);  // Desconecta pero mantiene el radio activo
+    delay(150);
+    WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), pass.c_str());
     unsigned long start = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - start < WIFI_CONNECT_TIMEOUT) {
@@ -190,10 +192,20 @@ void wifiManagerLoop() {
             startWifiBlink();
         }
 
+        // Rate limiter: no reintentar hasta que pase el intervalo
+        static unsigned long lastReconnectAttempt = 0;
+        static unsigned long reconnectInterval = 0;  // 0 = intento inmediato la primera vez
+        unsigned long now = millis();
+        if (now - lastReconnectAttempt < reconnectInterval) {
+            return;
+        }
+        lastReconnectAttempt = now;
+
         // 1. Intentar Ãºltima red exitosa primero
         if (lastSuccessfulSSID.length() > 0) {
             WifiCredential* lastCred = findCredentialBySSID(lastSuccessfulSSID);
             if (lastCred && tryConnectToNetwork(lastCred->ssid, lastCred->pass)) {
+                reconnectInterval = 0;
                 return;
             }
         }
@@ -207,14 +219,15 @@ void wifiManagerLoop() {
             WifiCredential* cred = findCredentialBySSID(scannedSSID);
             if (cred && tryConnectToNetwork(cred->ssid, cred->pass)) {
                 WiFi.scanDelete();
+                reconnectInterval = 0;
                 return;
             }
         }
         WiFi.scanDelete();
 
-        if (!wifiConnected) {
-            Serial.println("No se pudo reconectar a ninguna red.");
-        }
+        // Backoff: esperar 20s antes del próximo ciclo completo
+        reconnectInterval = 20000;
+        Serial.println("No se pudo reconectar. Reintentando en 20s...");
     } else {
         if (!wifiConnected) {
             // ConexiÃ³n establecida (posiblemente tardÃ­a)
