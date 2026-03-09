@@ -1,0 +1,15 @@
+{
+  "name": "kplant-mqtt-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bridge MQTT HiveMQ -> Supabase for Kplant",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^17.2.3",
+    "mqtt": "^5.10.4"
+  }
+}
