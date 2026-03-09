@@ -43,32 +43,36 @@ Notas HiveMQ:
 - [x] Secret key disponible (`sb_secret_...`)
 - [x] Legacy anon key disponible (`eyJ...`)
 - [x] Legacy service_role key disponible (`eyJ...`)
-- [ ] Auth email/password habilitado
-- [ ] Migraciones DB aplicadas
-- [ ] RLS habilitado en tablas de usuario
+- [x] Auth email/password habilitado
+- [x] Migraciones DB aplicadas
+- [x] RLS habilitado en tablas de usuario
 
 ## 5) Vercel (kplant_app)
+- [x] Proyecto Vercel creado y enlazado por CLI (`kplant_app`)
 - [ ] Proyecto conectado al repo
-- [ ] Variables en Vercel configuradas:
-  - [ ] `NEXT_PUBLIC_SUPABASE_URL`
-  - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - [ ] `SUPABASE_SERVICE_ROLE_KEY`
-- [ ] Primer deploy exitoso
-- [ ] URL produccion: `________________________`
+- [x] Variables en Vercel configuradas:
+  - [x] `NEXT_PUBLIC_SUPABASE_URL` (Production, Development)
+  - [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Production, Development)
+  - [x] `SUPABASE_SERVICE_ROLE_KEY` (Production, Development)
+- [x] Primer deploy exitoso (CLI)
+- [x] URL produccion: `https://kplantapp.vercel.app`
+- [ ] Variables Preview configuradas (pendiente hasta cerrar Git integration)
+- [ ] Integracion Git en Vercel con `Jeivous/kittypau_1a` (bloqueo actual)
 
 ## 6) Bridge (RPi / Node.js)
-- [ ] Bloqueo actual: sin acceso a RPi (usar bridge local temporal)
+- [x] Bridge desplegado en Raspberry Pi (`192.168.100.119`)
 - [x] Bridge local temporal creado en `kplant/bridge`
 - [x] `.env` configurado
-- [ ] Variables cargadas:
+- [x] Variables cargadas:
   - [x] `MQTT_BROKER`
   - [x] `MQTT_PORT`
   - [x] `MQTT_USER`
   - [x] `MQTT_PASS`
-  - [ ] `SUPABASE_URL`
-  - [ ] `SUPABASE_SERVICE_ROLE_KEY`
-- [x] Servicio corriendo localmente (Node.js en background)
-- [ ] Insertando lecturas en Supabase
+  - [x] `SUPABASE_URL`
+  - [x] `SUPABASE_SERVICE_ROLE_KEY`
+- [x] Servicio corriendo en Raspberry (`kplant-bridge.service`)
+- [x] Insertando lecturas en Supabase (prueba MQTT manual)
+- [x] Estado de bridge visible en Supabase (`KPBR0002` + view `bridge_status_live`)
 
 ## 7) Firmware ESP32-C3
 - [ ] `config.h` actualizado con WiFi + MQTT + `DEVICE_ID`
