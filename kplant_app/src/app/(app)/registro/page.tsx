@@ -31,7 +31,7 @@ export default function RegistroPage() {
   async function handleCreatePlant(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!plantName.trim()) { setError("Ingresá un nombre para la planta."); return; }
+    if (!plantName.trim()) { setError("Ingresa un nombre para la planta."); return; }
     setLoading(true);
 
     const res = await fetch("/api/plants", {
@@ -52,7 +52,7 @@ export default function RegistroPage() {
   async function handleLinkDevice(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!deviceCode.trim()) { setError("Ingresá el código del dispositivo."); return; }
+    if (!deviceCode.trim()) { setError("Ingresa el código del dispositivo."); return; }
     setLoading(true);
 
     const res = await fetch("/api/devices", {
@@ -137,10 +137,10 @@ export default function RegistroPage() {
       {step === 2 && (
         <div className="bg-white rounded-3xl p-6 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
           <h2 className="text-lg font-semibold mb-1" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
-            Vinculá tu dispositivo
+            Vincula tu dispositivo
           </h2>
           <p className="text-sm mb-5" style={{ color: "var(--color-sage-text)" }}>
-            Ingresá el código impreso en tu Kplant (ej: <strong>KPPL0001</strong>). El dispositivo debe estar encendido y conectado a WiFi.
+            Ingresa el código impreso en tu Kplant (ej: <strong>KPPL0001</strong>). El dispositivo debe estar encendido y conectado a WiFi.
           </p>
 
           <form onSubmit={handleLinkDevice} className="flex flex-col gap-4">

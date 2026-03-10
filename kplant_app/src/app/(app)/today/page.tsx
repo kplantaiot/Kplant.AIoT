@@ -72,7 +72,7 @@ export default async function TodayPage() {
             <Leaf className="w-8 h-8" style={{ color: "var(--color-moss-green)" }} />
           </div>
           <div>
-            <p className="font-semibold" style={{ color: "var(--color-charcoal-green)" }}>Registrá tu primera planta</p>
+            <p className="font-semibold" style={{ color: "var(--color-charcoal-green)" }}>Registra tu primera planta</p>
             <p className="text-sm mt-1" style={{ color: "var(--color-sage-text)" }}>
               Conectá tu dispositivo Kplant y empezá a monitorear.
             </p>
