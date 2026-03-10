@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Leaf, Flower2, Cpu, Check, ChevronRight } from "lucide-react";
 
@@ -26,6 +26,13 @@ export default function RegistroPage() {
 
   // Step 2 — device
   const [deviceCode, setDeviceCode] = useState("");
+
+  // Auto-redirect on step 3
+  useEffect(() => {
+    if (step !== 3) return;
+    const t = setTimeout(() => router.push("/today"), 3000);
+    return () => clearTimeout(t);
+  }, [step, router]);
 
   // --- Step 1: create plant ---
   async function handleCreatePlant(e: React.FormEvent) {
@@ -116,7 +123,7 @@ export default function RegistroPage() {
             ¿Cómo se llama tu planta?
           </h2>
           <p className="text-sm mb-5" style={{ color: "var(--color-sage-text)" }}>
-            Podés cambiar estos datos después.
+            Puedes cambiar estos datos después.
           </p>
 
           <form onSubmit={handleCreatePlant} className="flex flex-col gap-4">

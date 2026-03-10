@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Leaf, Home, Flower2, Cpu, Settings, LogOut } from "lucide-react";
+import { Leaf, Home, Plus, Settings, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 
 const NAV_ITEMS = [
-  { href: "/today",    label: "Inicio",      icon: Home },
-  { href: "/plant",    label: "Planta",      icon: Flower2 },
-  { href: "/device",   label: "Dispositivo", icon: Cpu },
+  { href: "/today",    label: "Inicio",  icon: Home },
+  { href: "/registro", label: "Nueva",   icon: Plus },
   { href: "/settings", label: "Ajustes",     icon: Settings },
 ];
 
@@ -37,14 +36,14 @@ export function AppNav() {
         </Link>
 
         <div className="flex items-center gap-1">
-          {NAV_ITEMS.slice(0, 3).map(({ href, label }) => (
+          {NAV_ITEMS.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
               className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
               style={{
-                background: pathname === href ? "hsl(var(--secondary))" : "transparent",
-                color: pathname === href ? "var(--color-forest-green)" : "var(--color-sage-text)",
+                background: pathname.startsWith(href) ? "hsl(var(--secondary))" : "transparent",
+                color: pathname.startsWith(href) ? "var(--color-forest-green)" : "var(--color-sage-text)",
               }}
             >
               {label}
