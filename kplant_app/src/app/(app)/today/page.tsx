@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Leaf, Plus } from "lucide-react";
+import { Droplets, Leaf, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PlantCard } from "../_components/PlantCard";
 import { type PlantWithData } from "@/lib/types";
@@ -41,9 +41,12 @@ export default async function TodayPage() {
   );
 
   const noPlants = plantsWithData.length === 0;
+  const plantsNeedingWater = plantsWithData.filter(
+    (p) => p.reading?.soil_moisture !== null && p.reading?.soil_moisture !== undefined && p.reading.soil_moisture < 30
+  );
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -64,6 +67,21 @@ export default async function TodayPage() {
           Nueva
         </Link>
       </div>
+
+      {/* Alerts banner */}
+      {plantsNeedingWater.length > 0 && (
+        <div
+          className="rounded-2xl px-4 py-3 mb-4 flex items-center gap-3"
+          style={{ background: "hsl(var(--danger) / 0.1)", border: "1px solid hsl(var(--danger) / 0.25)" }}
+        >
+          <Droplets className="w-5 h-5 flex-shrink-0" style={{ color: "hsl(var(--danger))" }} />
+          <p className="text-sm font-medium" style={{ color: "hsl(var(--danger))" }}>
+            {plantsNeedingWater.length === 1
+              ? `"${plantsNeedingWater[0].name}" necesita agua`
+              : `${plantsNeedingWater.length} plantas necesitan agua`}
+          </p>
+        </div>
+      )}
 
       {/* Empty state */}
       {noPlants && (

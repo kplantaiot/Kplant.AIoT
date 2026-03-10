@@ -17,7 +17,16 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Kplant — Monitoreo inteligente de tus plantas",
-  description: "Monitoreá la humedad, luz y temperatura de tus plantas en tiempo real.",
+  description: "Monitorea la humedad, luz y temperatura de tus plantas en tiempo real.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kplant",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({
@@ -27,6 +36,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <meta name="theme-color" content="#2D6A4F" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className={`${inter.variable} ${fraunces.variable} antialiased`}>
         {children}
       </body>

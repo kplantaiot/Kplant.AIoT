@@ -5,13 +5,30 @@ import { createClient } from "@/lib/supabase/server";
 import { soilLabel, lightLabel } from "@/lib/types";
 import { PlantCharts } from "./PlantCharts";
 import { PlantActions } from "./PlantActions";
+import { PlantRangeSelector } from "./PlantRangeSelector";
 
-export default async function PlantPage({ params }: { params: Promise<{ id: string }> }) {
+const RANGE_CONFIG: Record<string, { hours: number; limit: number }> = {
+  "1h":  { hours: 1,   limit: 60  },
+  "6h":  { hours: 6,   limit: 200 },
+  "24h": { hours: 24,  limit: 288 },
+  "7d":  { hours: 168, limit: 500 },
+};
+
+export default async function PlantPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ range?: string }>;
+}) {
   const { id } = await params;
+  const { range: rawRange } = await searchParams;
+  const range = rawRange && RANGE_CONFIG[rawRange] ? rawRange : "6h";
+  const { hours, limit } = RANGE_CONFIG[range];
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Fetch plant + linked device
   const { data: plant } = await supabase
     .from("plants")
     .select("*, devices(id, device_id, last_seen, sensor_health)")
@@ -23,15 +40,16 @@ export default async function PlantPage({ params }: { params: Promise<{ id: stri
 
   const device = plant.devices?.[0] ?? null;
 
-  // Fetch last 48 readings for charts (24h approx at 1 reading/min)
   const readings: any[] = [];
   if (device?.device_id) {
+    const cutoff = new Date(Date.now() - hours * 3600 * 1000).toISOString();
     const { data } = await supabase
       .from("sensor_readings")
       .select("soil_moisture, light_lux, temperature, humidity, created_at")
       .eq("device_id", device.device_id)
+      .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
-      .limit(48);
+      .limit(limit);
     if (data) readings.push(...data.reverse());
   }
 
@@ -40,7 +58,7 @@ export default async function PlantPage({ params }: { params: Promise<{ id: stri
   const lightStatus = lightLabel(latest?.light_lux ?? null);
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6">
+    <div className="max-w-lg mx-auto px-4 pt-6 pb-24">
       {/* Back */}
       <Link href="/today" className="flex items-center gap-1.5 text-sm mb-6" style={{ color: "var(--color-sage-text)" }}>
         <ArrowLeft className="w-4 h-4" /> Volver
@@ -79,13 +97,18 @@ export default async function PlantPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {/* Charts */}
+        {/* Charts with range selector */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold" style={{ color: "var(--color-sage-text)" }}>HISTORIAL</span>
+          <PlantRangeSelector current={range} />
+        </div>
+
         {readings.length > 0 ? (
           <PlantCharts readings={readings} />
         ) : (
           <div className="bg-white rounded-3xl p-8 shadow-sm border text-center" style={{ borderColor: "hsl(var(--border))" }}>
             <p className="text-sm" style={{ color: "var(--color-sage-text)" }}>
-              Sin lecturas aún. Asegúrate de que el dispositivo esté encendido.
+              Sin lecturas en este período.
             </p>
           </div>
         )}
