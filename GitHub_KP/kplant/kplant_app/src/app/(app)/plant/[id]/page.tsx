@@ -84,7 +84,7 @@ export default async function PlantPage({ params }: { params: Promise<{ id: stri
         ) : (
           <div className="bg-white rounded-3xl p-8 shadow-sm border text-center" style={{ borderColor: "hsl(var(--border))" }}>
             <p className="text-sm" style={{ color: "var(--color-sage-text)" }}>
-              Sin lecturas aún. Asegurate de que el dispositivo esté encendido.
+              Sin lecturas aún. Asegúrate de que el dispositivo esté encendido.
             </p>
           </div>
         )}

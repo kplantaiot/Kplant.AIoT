@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   if (!existing) {
     return NextResponse.json({
-      error: "Dispositivo no encontrado. Asegurate de que esté encendido y conectado a WiFi."
+      error: "Dispositivo no encontrado. Asegúrate de que esté encendido y conectado a WiFi."
     }, { status: 404 });
   }
 

@@ -56,7 +56,7 @@ export default function RegisterPage() {
             Kplant
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--color-sage-text)" }}>
-            Creá tu cuenta y registrá tu primera planta
+            Crea tu cuenta y registra tu primera planta
           </p>
         </div>
 
@@ -130,7 +130,7 @@ export default function RegisterPage() {
         </div>
 
         <p className="text-center text-sm mt-4" style={{ color: "var(--color-sage-text)" }}>
-          ¿Ya tenés cuenta?{" "}
+          ¿Ya tienes cuenta?{" "}
           <Link href="/login" className="font-medium" style={{ color: "var(--color-forest-green)" }}>
             Ingresá
           </Link>

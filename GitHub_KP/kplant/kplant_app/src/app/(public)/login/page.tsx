@@ -52,7 +52,7 @@ export default function LoginPage() {
         {/* Card */}
         <div className="bg-white rounded-3xl p-6 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
           <h2 className="text-lg font-semibold mb-5" style={{ color: "var(--color-charcoal-green)" }}>
-            Ingresá a tu cuenta
+            Inicia sesión
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -113,9 +113,9 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm mt-4" style={{ color: "var(--color-sage-text)" }}>
-          ¿No tenés cuenta?{" "}
+          ¿No tienes cuenta?{" "}
           <Link href="/register" className="font-medium" style={{ color: "var(--color-forest-green)" }}>
-            Registrate
+            Regístrate
           </Link>
         </p>
       </div>
