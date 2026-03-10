@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Droplets, Thermometer, Wind, Sun, Battery, Wifi, WifiOff } from "lucide-react";
+import Link from "next/link";
+import { Droplets, Thermometer, Wind, Sun, Battery, Wifi, WifiOff, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { type PlantWithData, type SensorReading, soilLabel, lightLabel, plantSummary, isOnline, timeAgo } from "@/lib/types";
 
@@ -85,7 +86,7 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
   return (
     <div className="bg-white rounded-3xl overflow-hidden shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
       {/* Header */}
-      <div className="px-5 pt-5 pb-4">
+      <Link href={`/plant/${initialPlant.id}`} className="block px-5 pt-5 pb-4">
         <div className="flex items-start justify-between mb-1">
           <div>
             <h2 className="text-lg font-semibold leading-tight" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
@@ -104,7 +105,7 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
 
         {/* Summary */}
         <p className="text-sm mt-2" style={{ color: "var(--color-sage-text)" }}>{summary}</p>
-      </div>
+      </Link>
 
       {/* Soil gauge */}
       <div className="px-5 pb-4">
@@ -122,7 +123,11 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
       </div>
 
       {/* Footer — device status */}
-      <div className="px-5 py-3 border-t flex items-center justify-between" style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted) / 0.5)" }}>
+      <Link
+        href={device ? `/device/${device.id}` : "/registro"}
+        className="px-5 py-3 border-t flex items-center justify-between"
+        style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted) / 0.5)" }}
+      >
         <div className="flex items-center gap-1.5">
           {online ? (
             <Wifi className="w-3.5 h-3.5" style={{ color: "hsl(var(--success))" }} />
@@ -133,10 +138,13 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
             {device?.device_id ?? "Sin dispositivo"}
           </span>
         </div>
-        <span className="text-xs" style={{ color: "var(--color-sage-text)" }}>
-          {timeAgo(reading?.created_at ?? device?.last_seen ?? null)}
-        </span>
-      </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs" style={{ color: "var(--color-sage-text)" }}>
+            {timeAgo(reading?.created_at ?? device?.last_seen ?? null)}
+          </span>
+          <ChevronRight className="w-3.5 h-3.5" style={{ color: "var(--color-sage-text)" }} />
+        </div>
+      </Link>
     </div>
   );
 }
