@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Wifi, WifiOff, Battery, Cpu, ArrowLeft, Flower2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isOnline, timeAgo } from "@/lib/types";
+import { DeviceActions } from "./DeviceActions";
 
 export default async function DevicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -108,6 +109,8 @@ export default async function DevicePage({ params }: { params: Promise<{ id: str
             </Link>
           </div>
         )}
+
+        <DeviceActions deviceId={device.id} hasPlant={!!device.plants} />
       </div>
     </div>
   );
