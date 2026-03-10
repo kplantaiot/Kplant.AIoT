@@ -9,9 +9,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const body = await req.json();
 
+  // Whitelist: only allow safe fields to be updated
+  const allowed: Record<string, unknown> = {};
+  if ("plant_id" in body) allowed.plant_id = body.plant_id ?? null;
+  if ("device_state" in body) allowed.device_state = body.device_state;
+
+  if (Object.keys(allowed).length === 0) {
+    return NextResponse.json({ error: "No hay campos válidos para actualizar." }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("devices")
-    .update(body)
+    .update(allowed)
     .eq("id", id)
     .eq("owner_id", user.id)
     .select()
