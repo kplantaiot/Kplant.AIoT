@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Leaf } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { soilLabel, lightLabel } from "@/lib/types";
 import { PlantCharts } from "./PlantCharts";
+import { PlantActions } from "./PlantActions";
 
 export default async function PlantPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -102,6 +103,9 @@ export default async function PlantPage({ params }: { params: Promise<{ id: stri
             <ArrowLeft className="w-4 h-4 rotate-180" style={{ color: "var(--color-sage-text)" }} />
           </Link>
         )}
+
+        {/* Edit / Delete */}
+        <PlantActions plant={{ id: plant.id, name: plant.name, species: plant.species ?? null, location: plant.location ?? null }} />
       </div>
     </div>
   );
