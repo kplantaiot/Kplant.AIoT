@@ -1,19 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/browser";
 import { Leaf } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,8 +37,47 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/registro");
-    router.refresh();
+    setSent(true);
+    setLoading(false);
+  }
+
+  if (sent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--color-sage-ivory)" }}>
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: "var(--color-forest-green)" }}>
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
+              Kplant
+            </h1>
+          </div>
+          <div className="bg-white rounded-3xl p-6 shadow-sm border text-center" style={{ borderColor: "hsl(var(--border))" }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "hsl(var(--secondary))" }}>
+              <Leaf className="w-6 h-6" style={{ color: "var(--color-forest-green)" }} />
+            </div>
+            <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--color-charcoal-green)" }}>
+              Revisa tu correo
+            </h2>
+            <p className="text-sm mb-1" style={{ color: "var(--color-sage-text)" }}>
+              Enviamos un enlace de confirmación a:
+            </p>
+            <p className="text-sm font-medium mb-4" style={{ color: "var(--color-charcoal-green)" }}>
+              {email}
+            </p>
+            <p className="text-xs" style={{ color: "var(--color-sage-text)" }}>
+              Una vez que confirmes tu correo, podrás iniciar sesión.
+            </p>
+          </div>
+          <p className="text-center text-sm mt-4" style={{ color: "var(--color-sage-text)" }}>
+            <Link href="/login" className="font-medium" style={{ color: "var(--color-forest-green)" }}>
+              Ir a inicio de sesión
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
