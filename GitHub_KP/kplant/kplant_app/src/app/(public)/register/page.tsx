@@ -132,7 +132,7 @@ export default function RegisterPage() {
         <p className="text-center text-sm mt-4" style={{ color: "var(--color-sage-text)" }}>
           ¿Ya tienes cuenta?{" "}
           <Link href="/login" className="font-medium" style={{ color: "var(--color-forest-green)" }}>
-            Ingresá
+            Inicia sesión
           </Link>
         </p>
       </div>

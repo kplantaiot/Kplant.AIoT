@@ -179,7 +179,7 @@ export default function RegistroPage() {
             ¡Todo listo!
           </h2>
           <p className="text-sm mb-6" style={{ color: "var(--color-sage-text)" }}>
-            {plantName} está registrada. En unos momentos vas a ver las primeras lecturas.
+            {plantName} está registrada. En unos momentos verás las primeras lecturas.
           </p>
           <button
             onClick={() => router.push("/today")}
