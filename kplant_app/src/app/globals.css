@@ -2,32 +2,32 @@
 
 :root {
   /* Fondos */
-  --background: 120 20% 97%;
-  --foreground: 150 15% 15%;
+  --background: 88 30% 97%;
+  --foreground: 125 40% 14%;
 
   /* Cards */
   --card: 0 0% 100%;
-  --card-foreground: 150 15% 15%;
+  --card-foreground: 125 40% 14%;
 
   /* Marca */
-  --primary: 145 45% 35%;
+  --primary: 125 50% 32%;
   --primary-foreground: 0 0% 100%;
 
   /* Secundario */
-  --secondary: 145 35% 88%;
-  --secondary-foreground: 145 45% 25%;
+  --secondary: 88 55% 88%;
+  --secondary-foreground: 125 50% 22%;
 
   /* Muted */
-  --muted: 120 15% 92%;
-  --muted-foreground: 140 10% 45%;
+  --muted: 90 25% 92%;
+  --muted-foreground: 105 20% 44%;
 
   /* Bordes */
-  --border: 130 15% 85%;
-  --input: 130 15% 85%;
-  --ring: 145 45% 35%;
+  --border: 90 22% 83%;
+  --input: 90 22% 83%;
+  --ring: 97 55% 45%;
 
   /* Estados */
-  --success: 145 55% 40%;
+  --success: 97 55% 45%;
   --warning: 45 65% 48%;
   --danger: 0 60% 48%;
 
@@ -35,14 +35,14 @@
   --radius: 18px;
 
   /* Colores de marca (hex directo para uso en JS/componentes) */
-  --color-sage-ivory: #F4F7F2;
-  --color-leaf-white: #FBFDF9;
-  --color-forest-green: #2D6A4F;
-  --color-moss-green: #52B788;
-  --color-soft-fern: #95D5B2;
-  --color-earth-brown: #8B6914;
-  --color-charcoal-green: #1B3A2D;
-  --color-sage-text: #5A7565;
+  --color-sage-ivory: #F2F7EC;
+  --color-leaf-white: #FAFDF6;
+  --color-forest-green: #2B7830;
+  --color-moss-green: #5CB82A;
+  --color-soft-fern: #86C93A;
+  --color-earth-brown: #D4EC6B;
+  --color-charcoal-green: #1B5520;
+  --color-sage-text: #3D7A42;
 }
 
 @theme inline {
