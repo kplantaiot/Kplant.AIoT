@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, X, Check } from "lucide-react";
+import { Pencil, Trash2, X } from "lucide-react";
+import { PlantPicker } from "@/app/(app)/_components/PlantPicker";
 
 type Plant = { id: string; name: string; species: string | null; location: string | null };
 
@@ -15,6 +16,7 @@ export function PlantActions({ plant }: { plant: Plant }) {
   const [location, setLocation] = useState(plant.location ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
 
   async function handleSave() {
     if (!name.trim()) { setError("El nombre es requerido."); return; }
@@ -74,22 +76,61 @@ export function PlantActions({ plant }: { plant: Plant }) {
           </button>
         </div>
         <div className="flex flex-col gap-3">
-          {[
-            { label: "Nombre", value: name, setter: setName, required: true },
-            { label: "Especie", value: species, setter: setSpecies, required: false },
-            { label: "Ubicación", value: location, setter: setLocation, required: false },
-          ].map(({ label, value, setter, required }) => (
-            <div key={label} className="flex flex-col gap-1">
-              <label className="text-xs font-medium" style={{ color: "var(--color-sage-text)" }}>{label}</label>
-              <input
-                value={value}
-                onChange={(e) => setter(e.target.value)}
-                required={required}
-                className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
-                style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted))", color: "var(--color-charcoal-green)" }}
-              />
+          {/* Nombre */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium" style={{ color: "var(--color-sage-text)" }}>Nombre</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted))", color: "var(--color-charcoal-green)" }}
+            />
+          </div>
+
+          {/* Especie con picker */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium" style={{ color: "var(--color-sage-text)" }}>Especie</label>
+              <button
+                type="button"
+                onClick={() => setShowPicker(v => !v)}
+                className="text-xs underline"
+                style={{ color: "var(--color-forest-green)" }}
+              >
+                {showPicker ? "Ocultar catálogo" : "Elegir del catálogo"}
+              </button>
             </div>
-          ))}
+            <input
+              value={species}
+              onChange={(e) => setSpecies(e.target.value)}
+              placeholder="Ej: Monstera deliciosa"
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted))", color: "var(--color-charcoal-green)" }}
+            />
+            {showPicker && (
+              <div className="mt-1">
+                <PlantPicker
+                  selected={species}
+                  onSelect={s => {
+                    setSpecies(s.scientific_name);
+                    setShowPicker(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Ubicación */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium" style={{ color: "var(--color-sage-text)" }}>Ubicación</label>
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full rounded-xl border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted))", color: "var(--color-charcoal-green)" }}
+            />
+          </div>
           {error && <p className="text-xs" style={{ color: "hsl(var(--danger))" }}>{error}</p>}
           <button
             onClick={handleSave}
