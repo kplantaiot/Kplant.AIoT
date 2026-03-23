@@ -145,8 +145,9 @@ function PlantIllustration({ species }: { species: string | null }) {
 
 // ── Avatar: real photo or SVG fallback ───────────────────────────────────────
 
-function PlantAvatar({ species, needsWater }: { species: string | null; needsWater: boolean }) {
+function PlantAvatar({ species, needsWater, online, hasDevice }: { species: string | null; needsWater: boolean; online: boolean; hasDevice: boolean }) {
   const photo = getPlantImage(species);
+  const offline = !hasDevice || !online;
   return (
     <div
       className="absolute bottom-0 right-4 translate-y-1/2 pointer-events-none"
@@ -157,7 +158,7 @@ function PlantAvatar({ species, needsWater }: { species: string | null; needsWat
         style={{
           border: "3px solid rgba(255,255,255,0.25)",
           boxShadow: "0 6px 24px rgba(0,0,0,0.35)",
-          background: needsWater ? "#5C1010" : "#0D3B1A",
+          background: offline ? "white" : needsWater ? "#5C1010" : "#0D3B1A",
         }}
       >
         {photo ? (
@@ -166,9 +167,10 @@ function PlantAvatar({ species, needsWater }: { species: string | null; needsWat
             src={photo}
             alt={species ?? "planta"}
             className="w-full h-full object-cover"
+            style={{ opacity: offline ? 0.5 : 1 }}
           />
         ) : (
-          <div className="w-full h-full p-2">
+          <div className="w-full h-full p-2" style={{ opacity: offline ? 0.5 : 1 }}>
             <PlantIllustration species={species} />
           </div>
         )}
@@ -268,7 +270,7 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
         </div>
 
         {/* ── Plant photo / illustration — overflows bottom edge ── */}
-        <PlantAvatar species={initialPlant.species ?? null} needsWater={needsWater} />
+        <PlantAvatar species={initialPlant.species ?? null} needsWater={needsWater} online={online} hasDevice={!!device} />
       </Link>
 
       {/* ── Sensor chips — extra top padding for the overflowing illustration ── */}
