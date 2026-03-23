@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,6 +13,18 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   weight: ["600"],
+  display: "swap",
+});
+
+const tsukimi = localFont({
+  src: [
+    { path: "../../public/fonts/TsukimiRounded-Light.ttf",    weight: "300" },
+    { path: "../../public/fonts/TsukimiRounded-Regular.ttf",  weight: "400" },
+    { path: "../../public/fonts/TsukimiRounded-Medium.ttf",   weight: "500" },
+    { path: "../../public/fonts/TsukimiRounded-SemiBold.ttf", weight: "600" },
+    { path: "../../public/fonts/TsukimiRounded-Bold.ttf",     weight: "700" },
+  ],
+  variable: "--font-tsukimi",
   display: "swap",
 });
 
@@ -41,7 +54,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className={`${inter.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${inter.variable} ${fraunces.variable} ${tsukimi.variable} antialiased`}>
         {children}
       </body>
     </html>

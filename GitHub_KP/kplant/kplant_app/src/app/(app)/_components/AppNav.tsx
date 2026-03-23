@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Leaf, Home, Plus, Settings, LogOut, Shield } from "lucide-react";
+import { Home, Plus, Settings, LogOut, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 
 const NAV_ITEMS = [
@@ -26,13 +27,15 @@ export function AppNav({ admin = false }: { admin?: boolean }) {
     <>
       {/* Desktop top nav */}
       <nav className="hidden md:flex items-center justify-between px-8 py-4 border-b" style={{ background: "#0D3B1A", borderColor: "rgba(255,255,255,0.08)" }}>
-        <Link href="/today" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "var(--color-forest-green)" }}>
-            <Leaf className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-lg" style={{ fontFamily: "var(--font-fraunces)", color: "white" }}>
-            Kplant
-          </span>
+        <Link href="/today" className="flex items-center">
+          <Image
+            src="/logo_kplant.png"
+            alt="Kplant"
+            width={110}
+            height={40}
+            className="object-contain"
+            style={{ filter: "brightness(0) invert(1)" }}
+          />
         </Link>
 
         <div className="flex items-center gap-1">
