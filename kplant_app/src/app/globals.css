@@ -2,7 +2,7 @@
 
 :root {
   /* Fondos */
-  --background: 88 30% 97%;
+  --background: 88 28% 94%;
   --foreground: 125 40% 14%;
 
   /* Cards */
@@ -35,7 +35,7 @@
   --radius: 18px;
 
   /* Colores de marca (hex directo para uso en JS/componentes) */
-  --color-sage-ivory: #F2F7EC;
+  --color-sage-ivory: #EBF2E4;
   --color-leaf-white: #FAFDF6;
   --color-forest-green: #2B7830;
   --color-moss-green: #5CB82A;
@@ -46,6 +46,15 @@
 }
 
 @theme inline {
+  /* +2px a cada tamaño (base 16px → rem equivalentes) */
+  --text-xs:   0.875rem;   /* 12→14px */
+  --text-sm:   1rem;       /* 14→16px */
+  --text-base: 1.125rem;   /* 16→18px */
+  --text-lg:   1.25rem;    /* 18→20px */
+  --text-xl:   1.375rem;   /* 20→22px */
+  --text-2xl:  1.625rem;   /* 24→26px */
+  --text-3xl:  2rem;       /* 30→32px */
+  --text-4xl:  2.375rem;   /* 36→38px */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));

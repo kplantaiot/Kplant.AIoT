@@ -8,6 +8,7 @@ const RANGES = [
   { key: "6h",  label: "6h" },
   { key: "24h", label: "24h" },
   { key: "7d",  label: "7d" },
+  { key: "30d", label: "30d" },
 ];
 
 function RangeSelectorInner({ current }: { current: string }) {

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Leaf, Flower2, Cpu, Check, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Leaf, Flower2, Cpu, Check, ChevronRight, PenLine } from "lucide-react";
+import { PlantPicker } from "../_components/PlantPicker";
 
 type Step = 1 | 2 | 3;
 
@@ -14,15 +15,19 @@ const STEPS = [
 
 export default function RegistroPage() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(1);
+  const searchParams = useSearchParams();
+  const existingPlantId = searchParams.get("plant_id");
+
+  const [step, setStep] = useState<Step>(existingPlantId ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // Step 1 — plant data
-  const [plantName, setPlantName] = useState("");
-  const [species, setSpecies] = useState("");
-  const [location, setLocation] = useState("");
-  const [plantId, setPlantId] = useState<string | null>(null);
+  const [plantName, setPlantName]   = useState("");
+  const [species, setSpecies]       = useState("");       // scientific name
+  const [location, setLocation]     = useState("");
+  const [plantId, setPlantId]       = useState<string | null>(existingPlantId);
+  const [customName, setCustomName] = useState(false);   // user typed own name
 
   // Step 2 — device
   const [deviceCode, setDeviceCode] = useState("");
@@ -118,26 +123,59 @@ export default function RegistroPage() {
 
       {/* Step 1 — Planta */}
       {step === 1 && (
-        <div className="bg-white rounded-3xl p-6 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
-          <h2 className="text-lg font-semibold mb-1" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
-            ¿Cómo se llama tu planta?
-          </h2>
-          <p className="text-sm mb-5" style={{ color: "var(--color-sage-text)" }}>
-            Puedes cambiar estos datos después.
-          </p>
+        <form onSubmit={handleCreatePlant} className="flex flex-col gap-4">
+          {/* Catalog picker */}
+          <div className="bg-white rounded-3xl p-5 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
+            <h2 className="text-lg font-semibold mb-1" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
+              ¿Qué tipo de planta es?
+            </h2>
+            <p className="text-sm mb-4" style={{ color: "var(--color-sage-text)" }}>
+              Selecciona del catálogo para autocompletar sus datos de cuidado.
+            </p>
+            <PlantPicker
+              selected={species}
+              onSelect={s => {
+                setSpecies(s.scientific_name);
+                if (!customName) setPlantName(s.common_name);
+              }}
+            />
+          </div>
 
-          <form onSubmit={handleCreatePlant} className="flex flex-col gap-4">
-            <Field label="Nombre *" value={plantName} onChange={setPlantName} placeholder="Ej: Monstera, Poto, Cactus" />
-            <Field label="Especie" value={species} onChange={setSpecies} placeholder="Ej: Monstera deliciosa" />
-            <Field label="Ubicación" value={location} onChange={setLocation} placeholder="Ej: Living, Balcón" />
+          {/* Name + location */}
+          <div className="bg-white rounded-3xl p-5 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
+            <h2 className="text-lg font-semibold mb-1" style={{ fontFamily: "var(--font-fraunces)", color: "var(--color-charcoal-green)" }}>
+              Personaliza
+            </h2>
+            <p className="text-sm mb-4" style={{ color: "var(--color-sage-text)" }}>
+              Ponle un nombre y dinos dónde está.
+            </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium" style={{ color: "var(--color-charcoal-green)" }}>
+                  Nombre *
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={plantName}
+                    onChange={e => { setPlantName(e.target.value); setCustomName(true); }}
+                    placeholder="Ej: Mi Monstera, Poto del baño…"
+                    className="w-full rounded-xl border pl-4 pr-9 py-2.5 text-sm outline-none"
+                    style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted))", color: "var(--color-charcoal-green)" }}
+                  />
+                  <PenLine className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none" style={{ color: "var(--color-sage-text)" }} />
+                </div>
+              </div>
+              <Field label="Ubicación" value={location} onChange={setLocation} placeholder="Ej: Living, Balcón, Dormitorio" />
+            </div>
+          </div>
 
-            {error && <ErrorMsg>{error}</ErrorMsg>}
+          {error && <ErrorMsg>{error}</ErrorMsg>}
 
-            <SubmitBtn loading={loading}>
-              Siguiente <ChevronRight className="w-4 h-4" />
-            </SubmitBtn>
-          </form>
-        </div>
+          <SubmitBtn loading={loading}>
+            Siguiente <ChevronRight className="w-4 h-4" />
+          </SubmitBtn>
+        </form>
       )}
 
       {/* Step 2 — Dispositivo */}

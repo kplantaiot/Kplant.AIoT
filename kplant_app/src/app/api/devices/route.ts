@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 export async function GET() {
   const supabase = await createClient();
@@ -50,10 +50,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Este dispositivo ya pertenece a otra cuenta." }, { status: 409 });
   }
 
-  // Claim the device
-  const { data, error } = await supabase
+  // Claim the device — uses service client to bypass RLS on unowned devices
+  const serviceSupabase = createServiceClient();
+  const { data, error } = await serviceSupabase
     .from("devices")
-    .update({ owner_id: user.id, plant_id: plant_id ?? null })
+    .update({ owner_id: user.id, plant_id: plant_id ?? null, device_state: "linked" })
     .eq("device_id", code)
     .select()
     .single();

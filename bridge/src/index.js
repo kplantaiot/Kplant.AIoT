@@ -2,6 +2,7 @@ require('dotenv').config();
 const mqtt = require('mqtt');
 const { createClient } = require('@supabase/supabase-js');
 const os = require('os');
+const { processAnalytics } = require('./analytics');
 
 const DEVICE_PREFIX = process.env.DEVICE_PREFIX || 'KPPL';
 const BRIDGE_DEVICE_ID = process.env.BRIDGE_DEVICE_ID || 'KPBR0002';
@@ -128,14 +129,14 @@ async function ensureDeviceExists(deviceId, payload) {
 async function handleSensorData(deviceId, data) {
   const { error } = await supabase.from('sensor_readings').insert({
     device_id: deviceId,
-    soil_moisture: data.soil_moisture ?? null,
-    soil_condition: data.soil_condition ?? null,
+    soil_moisture: data.soil?.percent ?? data.soil_moisture ?? null,
+    soil_condition: data.soil?.condition ?? data.soil_condition ?? null,
     temperature: data.temp ?? null,
     humidity: data.hum ?? null,
     light_lux: data.light?.lux ?? null,
-    light_percent: data.light?.['%'] ?? null,
+    light_percent: data.light?.percent ?? data.light?.['%'] ?? null,
     light_condition: data.light?.condition ?? null,
-    battery_level: data.battery?.level ?? null,
+    battery_level: data.battery?.percent ?? data.battery?.level ?? null,
     battery_voltage: data.battery?.voltage ?? null,
     device_timestamp: data.timestamp ?? null
   });
@@ -185,14 +186,14 @@ async function writeToReadings(deviceId, data) {
     {
       device_id: device.id,
       plant_id: device.plant_id ?? null,
-      soil_moisture: data.soil_moisture ?? null,
-      soil_condition: data.soil_condition ?? null,
+      soil_moisture: data.soil?.percent ?? data.soil_moisture ?? null,
+      soil_condition: data.soil?.condition ?? data.soil_condition ?? null,
       temperature: data.temp ?? null,
       humidity: data.hum ?? null,
       light_lux: data.light?.lux ?? null,
-      light_percent: data.light?.['%'] ?? null,
+      light_percent: data.light?.percent ?? data.light?.['%'] ?? null,
       light_condition: data.light?.condition ?? null,
-      battery_level: data.battery?.level ?? null,
+      battery_level: data.battery?.percent ?? data.battery?.level ?? null,
       battery_voltage: data.battery?.voltage ?? null,
       recorded_at: recordedAt,
       ingested_at: new Date().toISOString(),
@@ -205,6 +206,14 @@ async function writeToReadings(deviceId, data) {
     console.error(`[READINGS] upsert error (${deviceId}): ${error.message}`);
   } else {
     console.log(`[READINGS] upsert OK (${deviceId}, clock_invalid=${clockInvalid})`);
+    const reading = {
+      soil_moisture: data.soil?.percent ?? data.soil_moisture ?? null,
+      temperature:   data.temp ?? null,
+      humidity:      data.hum ?? null,
+      light_lux:     data.light?.lux ?? null,
+      battery_level: data.battery?.percent ?? data.battery?.level ?? null,
+    };
+    processAnalytics(deviceId, device.owner_id, device.plant_id ?? null, reading);
   }
 }
 
