@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Thermometer, Wind, Sun, Wifi, WifiOff, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { type PlantWithData, type SensorReading, soilLabel, isOnline, timeAgo } from "@/lib/types";
+import { getPlantImage } from "@/lib/plantImages";
 
 // ── Botanical SVG illustrations (simplified silhouettes) ─────────────────────
 
@@ -142,6 +143,40 @@ function PlantIllustration({ species }: { species: string | null }) {
   );
 }
 
+// ── Avatar: real photo or SVG fallback ───────────────────────────────────────
+
+function PlantAvatar({ species, needsWater }: { species: string | null; needsWater: boolean }) {
+  const photo = getPlantImage(species);
+  return (
+    <div
+      className="absolute bottom-0 right-4 translate-y-1/2 pointer-events-none"
+      style={{ width: 90, height: 90 }}
+    >
+      <div
+        className="absolute inset-0 rounded-full overflow-hidden"
+        style={{
+          border: "3px solid rgba(255,255,255,0.25)",
+          boxShadow: "0 6px 24px rgba(0,0,0,0.35)",
+          background: needsWater ? "#5C1010" : "#0D3B1A",
+        }}
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo}
+            alt={species ?? "planta"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full p-2">
+            <PlantIllustration species={species} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
@@ -232,27 +267,8 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
           </div>
         </div>
 
-        {/* ── Plant illustration — overflows bottom edge ── */}
-        <div
-          className="absolute bottom-0 right-4 translate-y-1/2 pointer-events-none"
-          style={{ width: 88, height: 100 }}
-        >
-          {/* White circle background */}
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: needsWater
-                ? "linear-gradient(160deg, #5C1010, #8B1A1A)"
-                : "linear-gradient(160deg, #0D3B1A, #1B5520)",
-              border: "3px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
-            }}
-          />
-          {/* SVG illustration */}
-          <div className="absolute inset-1.5">
-            <PlantIllustration species={initialPlant.species ?? null} />
-          </div>
-        </div>
+        {/* ── Plant photo / illustration — overflows bottom edge ── */}
+        <PlantAvatar species={initialPlant.species ?? null} needsWater={needsWater} />
       </Link>
 
       {/* ── Sensor chips — extra top padding for the overflowing illustration ── */}
