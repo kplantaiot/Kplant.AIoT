@@ -103,10 +103,10 @@ export function PlantPicker({ onSelect, selected }: Props) {
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-0.5">
+      {/* List */}
+      <div className="flex flex-col gap-1.5 max-h-72 overflow-y-auto pr-0.5">
         {visible.length === 0 && (
-          <p className="col-span-2 text-sm text-center py-6" style={{ color: "var(--color-sage-text)" }}>
+          <p className="text-sm text-center py-6" style={{ color: "var(--color-sage-text)" }}>
             Sin resultados
           </p>
         )}
@@ -117,40 +117,31 @@ export function PlantPicker({ onSelect, selected }: Props) {
               key={s.id}
               type="button"
               onClick={() => onSelect(s)}
-              className="text-left rounded-2xl p-3 border transition-all"
+              className="w-full text-left rounded-2xl px-4 py-3 border transition-all flex items-center justify-between"
               style={{
                 background: isSelected ? "hsl(var(--secondary))" : "white",
                 borderColor: isSelected ? "var(--color-forest-green)" : "hsl(var(--border))",
                 borderWidth: isSelected ? "2px" : "1px",
               }}
             >
-              {/* Letter avatar */}
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2 text-sm font-bold"
-                style={{
-                  background: isSelected ? "var(--color-forest-green)" : "hsl(var(--muted))",
-                  color: isSelected ? "white" : "var(--color-charcoal-green)",
-                }}
-              >
-                {s.common_name.charAt(0)}
+              <div>
+                <p className="text-sm font-semibold leading-tight" style={{ color: "var(--color-charcoal-green)" }}>
+                  {s.common_name}
+                </p>
+                <p className="text-xs italic mt-0.5" style={{ color: "var(--color-sage-text)" }}>
+                  {s.scientific_name}
+                </p>
               </div>
-              <p className="text-xs font-semibold leading-tight" style={{ color: "var(--color-charcoal-green)" }}>
-                {s.common_name}
-              </p>
-              <p className="text-[10px] italic mt-0.5 leading-tight" style={{ color: "var(--color-sage-text)" }}>
-                {s.scientific_name}
-              </p>
-              {/* Light + water hints */}
-              <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                 {s.light_need && (
-                  <span className="flex items-center gap-0.5 text-[9px]" style={{ color: "var(--color-sage-text)" }}>
-                    <Sun className="w-2.5 h-2.5" />
+                  <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--color-sage-text)" }}>
+                    <Sun className="w-3 h-3" />
                     {LIGHT_LABEL[s.light_need] ?? s.light_need}
                   </span>
                 )}
                 {s.water_frequency && (
-                  <span className="flex items-center gap-0.5 text-[9px]" style={{ color: "var(--color-sage-text)" }}>
-                    <Droplets className="w-2.5 h-2.5" />
+                  <span className="flex items-center gap-0.5 text-[10px]" style={{ color: "var(--color-sage-text)" }}>
+                    <Droplets className="w-3 h-3" />
                     {WATER_LABEL[s.water_frequency] ?? s.water_frequency}
                   </span>
                 )}
