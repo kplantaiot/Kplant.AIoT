@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Search, Droplets, Sun } from "lucide-react";
-import { getPlantImage } from "@/lib/plantImages";
 
 type Species = {
   id: string;
@@ -125,26 +124,16 @@ export function PlantPicker({ onSelect, selected }: Props) {
                 borderWidth: isSelected ? "2px" : "1px",
               }}
             >
-              {/* Plant photo or initial */}
-              {(() => {
-                const photo = getPlantImage(s.scientific_name);
-                return photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={photo}
-                    alt={s.common_name}
-                    className="w-12 h-12 rounded-xl object-cover mb-2"
-                    style={{ border: isSelected ? "2px solid var(--color-forest-green)" : "none" }}
-                  />
-                ) : (
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 text-base font-bold"
-                    style={{ background: isSelected ? "var(--color-forest-green)" : "hsl(var(--muted))", color: isSelected ? "white" : "var(--color-charcoal-green)" }}
-                  >
-                    {s.common_name.charAt(0)}
-                  </div>
-                );
-              })()}
+              {/* Letter avatar */}
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center mb-2 text-sm font-bold"
+                style={{
+                  background: isSelected ? "var(--color-forest-green)" : "hsl(var(--muted))",
+                  color: isSelected ? "white" : "var(--color-charcoal-green)",
+                }}
+              >
+                {s.common_name.charAt(0)}
+              </div>
               <p className="text-xs font-semibold leading-tight" style={{ color: "var(--color-charcoal-green)" }}>
                 {s.common_name}
               </p>
