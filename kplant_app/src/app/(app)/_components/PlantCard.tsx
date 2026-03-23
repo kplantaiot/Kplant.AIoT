@@ -150,7 +150,7 @@ function PlantAvatar({ species, needsWater, online, hasDevice }: { species: stri
   const offline = !hasDevice || !online;
   return (
     <div
-      className="absolute bottom-0 right-4 translate-y-1/2 pointer-events-none"
+      className="absolute bottom-0 left-4 translate-y-1/2 pointer-events-none"
       style={{ width: 90, height: 90 }}
     >
       <div
@@ -223,7 +223,7 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
           {/* Top row: name + status icon */}
           <div className="flex items-start gap-3">
             {/* Text — leaves space for illustration */}
-            <div className="min-w-0 flex-1 pr-20">
+            <div className="min-w-0 flex-1">
               <h2
                 className="text-xl font-semibold leading-tight text-white truncate"
                 style={{ fontFamily: "var(--font-fraunces)" }}
@@ -274,7 +274,7 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
       </Link>
 
       {/* ── Sensor chips — extra top padding for the overflowing illustration ── */}
-      <div className="px-5 pt-14 pb-3 flex flex-wrap gap-2">
+      <div className="pl-28 pr-5 pt-14 pb-3 flex flex-wrap gap-2">
         <SensorChip icon={Thermometer} value={reading?.temperature != null ? `${(Math.round(reading.temperature * 10) / 10)}°C` : "—"} />
         <SensorChip icon={Wind}        value={reading?.humidity    != null ? `${Math.round(reading.humidity)}% HR` : "—"} />
         <SensorChip icon={Sun}         value={reading?.light_lux   != null ? `${Math.round(reading.light_lux)} lux` : "—"} />
