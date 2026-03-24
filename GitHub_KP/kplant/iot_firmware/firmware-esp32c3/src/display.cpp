@@ -42,7 +42,6 @@ const char* dayName(int wday) {
 }  // namespace
 
 void displayInit() {
-  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   u8g2.begin();
 }
 
