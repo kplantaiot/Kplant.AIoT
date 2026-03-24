@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <WiFi.h>
+#include <time.h>
 
 namespace {
 bool gConnected = false;
@@ -21,6 +22,10 @@ static void connectWifi() {
 
   gConnected = (WiFi.status() == WL_CONNECTED);
   gLastAttemptMs = millis();
+
+  if (gConnected) {
+    configTime(TZ_OFFSET_SEC, 0, NTP_SERVER);
+  }
 }
 
 void wifiManagerInit() {
