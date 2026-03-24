@@ -323,6 +323,20 @@ setInterval(() => {
   });
 }, BRIDGE_STATUS_INTERVAL_MS);
 
+// Heartbeat: marca offline cualquier dispositivo sin STATUS en los últimos 3 minutos
+const OFFLINE_TIMEOUT_MS = 3 * 60 * 1000;
+setInterval(async () => {
+  const cutoff = new Date(Date.now() - OFFLINE_TIMEOUT_MS).toISOString();
+  const { error } = await supabase
+    .from('devices')
+    .update({ wifi_status: 'disconnected' })
+    .lt('last_seen', cutoff)
+    .neq('device_id', BRIDGE_DEVICE_ID)
+    .eq('wifi_status', 'connected');
+  if (error) console.error('[HEARTBEAT] Error:', error.message);
+  else console.log('[HEARTBEAT] Check offline devices OK');
+}, 60000);
+
 process.on('SIGINT', () => {
   console.log('\n[BRIDGE] Closing MQTT connection...');
   mqttClient.end();
