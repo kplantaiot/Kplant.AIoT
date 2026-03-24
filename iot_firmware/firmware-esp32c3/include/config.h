@@ -6,11 +6,11 @@
 #define FIRMWARE_VERSION "1.0.0"
 
 // --- ESP32-C3 SuperMini pins ---
-#define PIN_LED_STATUS 8  // GPIO8 - onboard LED (normal logic)
-#define PIN_SOIL_ADC 2    // GPIO2 - capacitive soil moisture sensor (analog)
+#define PIN_LED_STATUS 8  // GPIO8 - onboard LED (inverted: LOW=on)
+#define PIN_SOIL_ADC 0    // GPIO0 - capacitive soil moisture sensor (analog)
 #define PIN_BATT_ADC 3    // GPIO3 - battery voltage via 1:1 divider
-#define I2C_SDA_PIN 4     // GPIO4 - I2C SDA (AHT10 + VEML7700 + SSD1306)
-#define I2C_SCL_PIN 5     // GPIO5 - I2C SCL (AHT10 + VEML7700 + SSD1306)
+#define I2C_SDA_PIN 5     // GPIO5 - I2C SDA (AHT10 + VEML7700 + SSD1306)
+#define I2C_SCL_PIN 6     // GPIO6 - I2C SCL (AHT10 + VEML7700 + SSD1306)
 
 // --- I2C addresses ---
 #define AHT10_I2C_ADDR 0x38
@@ -23,14 +23,14 @@
 #define DEVICE_MODEL "ESP32-C3 SuperMini"
 
 // --- WiFi defaults (replace per device/environment) ---
-#define WIFI_SSID "TuRed"
-#define WIFI_PASS "TuPassword"
+#define WIFI_SSID "Suarez_Mujica_891"
+#define WIFI_PASS "SuarezMujica891"
 
 // --- MQTT HiveMQ Cloud ---
-#define MQTT_BROKER "xxxxxxx.s1.eu.hivemq.cloud"
+#define MQTT_BROKER "175b4a24e828456884ccbd18fb1a5bd8.s1.eu.hivemq.cloud"
 #define MQTT_PORT 8883
-#define MQTT_USER "KplantUser"
-#define MQTT_PASS "KplantPass"
+#define MQTT_USER "Kplant_broker"
+#define MQTT_PASS "Kplant1234"
 
 // --- MQTT topics ---
 #define TOPIC_STATUS DEVICE_ID "/STATUS"
