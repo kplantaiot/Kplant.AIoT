@@ -53,6 +53,16 @@
 #define BATT_V_MAX 4.2f
 #define BATT_DIVIDER 2.0f
 
+// --- Button ---
+#define PIN_BUTTON 9             // GPIO9 - BOOT button (active LOW, internal pull-up)
+#define BUTTON_LONG_PRESS_MS 3000UL
+
+// --- NTP / Time ---
+#define NTP_SERVER "pool.ntp.org"
+#define TZ_OFFSET_SEC (-3 * 3600)  // UTC-3 Chile
+#define DATE_SHOW_MS 5000UL        // How long to show date on long press
+
 // --- Timing ---
 #define SENSORS_INTERVAL_MS 60000UL  // SENSORS every 60s
 #define STATUS_INTERVAL_MS 30000UL   // STATUS every 30s
+#define DISPLAY_INTERVAL_MS 1000UL   // Display refresh (1s for clock)
