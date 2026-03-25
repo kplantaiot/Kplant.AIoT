@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Thermometer, Wind, Sun, Wifi, WifiOff, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
+import { Thermometer, Wind, Sun, AlertTriangle, CheckCircle2, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { type PlantWithData, type SensorReading, soilLabel, isOnline, timeAgo } from "@/lib/types";
 import { getPlantImage } from "@/lib/plantImages";
@@ -287,13 +287,11 @@ export function PlantCard({ plant: initialPlant }: { plant: PlantWithData }) {
         style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--muted) / 0.4)" }}
       >
         <div className="flex items-center gap-1.5">
-          {online
-            ? <Wifi    className="w-3.5 h-3.5" style={{ color: "hsl(var(--success))" }} />
-            : <WifiOff className="w-3.5 h-3.5" style={{ color: "var(--color-sage-text)" }} />
-          }
-          <span className="text-xs" style={{ color: "var(--color-sage-text)" }}>
-            {device?.device_id ?? "Sin dispositivo · vincular"}
-          </span>
+          {!device && (
+            <span className="text-xs" style={{ color: "var(--color-sage-text)" }}>
+              Sin dispositivo · vincular
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <span className="text-xs" style={{ color: "var(--color-sage-text)" }}>
