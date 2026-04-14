@@ -22,6 +22,7 @@ export type Device = {
   wifi_ip: string | null;
   sensor_health: string | null;
   last_seen: string | null;
+  sample_interval_ms: number | null;
 };
 
 export type SensorReading = {

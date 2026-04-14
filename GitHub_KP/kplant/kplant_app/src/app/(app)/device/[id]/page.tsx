@@ -12,7 +12,7 @@ export default async function DevicePage({ params }: { params: Promise<{ id: str
 
   const { data: device } = await supabase
     .from("devices")
-    .select("*, plants(id, name)")
+    .select("*, plants(id, name), sample_interval_ms")
     .eq("id", id)
     .eq("owner_id", user!.id)
     .maybeSingle();
@@ -110,7 +110,11 @@ export default async function DevicePage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
-        <DeviceActions deviceId={device.id} hasPlant={!!device.plants} />
+        <DeviceActions
+          deviceId={device.id}
+          hasPlant={!!device.plants}
+          currentIntervalMs={device.sample_interval_ms ?? null}
+        />
       </div>
     </div>
   );
