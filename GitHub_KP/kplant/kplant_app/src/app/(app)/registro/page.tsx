@@ -24,7 +24,8 @@ export default function RegistroPage() {
 
   // Step 1 — plant data
   const [plantName, setPlantName]   = useState("");
-  const [species, setSpecies]       = useState("");       // scientific name
+  const [species, setSpecies]       = useState("");       // common name
+  const [speciesId, setSpeciesId]   = useState<string | null>(null);
   const [location, setLocation]     = useState("");
   const [plantId, setPlantId]       = useState<string | null>(existingPlantId);
   const [customName, setCustomName] = useState(false);   // user typed own name
@@ -49,7 +50,7 @@ export default function RegistroPage() {
     const res = await fetch("/api/plants", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: plantName, species, location }),
+      body: JSON.stringify({ name: plantName, species, location, species_id: speciesId }),
     });
     const data = await res.json();
 
@@ -133,9 +134,10 @@ export default function RegistroPage() {
               Selecciona del catálogo para autocompletar sus datos de cuidado.
             </p>
             <PlantPicker
-              selected={species}
+              selectedId={speciesId}
               onSelect={s => {
-                setSpecies(s.scientific_name);
+                setSpecies(s.common_name);
+                setSpeciesId(s.id);
                 if (!customName) setPlantName(s.common_name);
               }}
             />
