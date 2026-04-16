@@ -3,6 +3,7 @@ const mqtt = require('mqtt');
 const { createClient } = require('@supabase/supabase-js');
 const os = require('os');
 const { processAnalytics } = require('./analytics');
+const { evaluateAlerts } = require('./alerts');
 
 const DEVICE_PREFIX = process.env.DEVICE_PREFIX || 'KPPL';
 const BRIDGE_DEVICE_ID = process.env.BRIDGE_DEVICE_ID || 'KPBR0002';
@@ -157,6 +158,7 @@ async function writeToReadings(deviceId, data) {
     .eq('device_id', deviceId)
     .maybeSingle();
 
+
   if (deviceLookupError) {
     console.error(`[READINGS] device lookup error (${deviceId}): ${deviceLookupError.message}`);
     return;
@@ -214,6 +216,18 @@ async function writeToReadings(deviceId, data) {
       battery_level: data.battery?.percent ?? data.battery?.level ?? null,
     };
     processAnalytics(deviceId, device.owner_id, device.plant_id ?? null, reading);
+
+    // Motor de alertas: evaluar si la planta tiene especie vinculada
+    if (device.plant_id) {
+      const { data: plant } = await supabase
+        .from('plants')
+        .select('species_id, plant_species(soil_min_pct, soil_max_pct, light_min_lux, light_max_lux, ideal_temp_min, ideal_temp_max, ideal_humidity_min, ideal_humidity_max)')
+        .eq('id', device.plant_id)
+        .maybeSingle();
+
+      const species = plant?.plant_species ?? null;
+      await evaluateAlerts(deviceId, device.plant_id, device.owner_id, reading, species, supabase);
+    }
   }
 }
 

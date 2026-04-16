@@ -15,7 +15,7 @@ type Species = {
 
 type Props = {
   onSelect: (s: Species) => void;
-  selected: string | null; // scientific_name of currently selected
+  selectedId: string | null; // UUID of currently selected species
 };
 
 const SUBCATS: { key: string; label: string }[] = [
@@ -42,7 +42,7 @@ const WATER_LABEL: Record<string, string> = {
   quincenal:  "Quincenal",
 };
 
-export function PlantPicker({ onSelect, selected }: Props) {
+export function PlantPicker({ onSelect, selectedId }: Props) {
   const [species, setSpecies]   = useState<Species[]>([]);
   const [filter, setFilter]     = useState("all");
   const [search, setSearch]     = useState("");
@@ -111,7 +111,7 @@ export function PlantPicker({ onSelect, selected }: Props) {
           </p>
         )}
         {visible.map(s => {
-          const isSelected = s.scientific_name === selected;
+          const isSelected = s.id === selectedId;
           return (
             <button
               key={s.id}

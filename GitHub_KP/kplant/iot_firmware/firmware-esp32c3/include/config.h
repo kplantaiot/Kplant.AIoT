@@ -18,7 +18,7 @@
 #define SSD1306_I2C_ADDR 0x3C
 
 // --- Device metadata ---
-#define DEVICE_ID "KPPL0001"
+#define DEVICE_ID "KPPL0011"
 #define DEVICE_TYPE "plant_monitor"
 #define DEVICE_MODEL "ESP32-C3 SuperMini"
 
@@ -39,8 +39,8 @@
 
 // --- Soil calibration (ESP32 ADC 12-bit: 0-4095) ---
 // Calibrate with dry and fully wet soil for each sensor batch.
-#define SOIL_ADC_DRY 2800
-#define SOIL_ADC_WET 1200
+#define SOIL_ADC_DRY 3901
+#define SOIL_ADC_WET 2250
 
 // --- Light normalization (indoor scale) ---
 #define LIGHT_LUX_MAX 10000.0f

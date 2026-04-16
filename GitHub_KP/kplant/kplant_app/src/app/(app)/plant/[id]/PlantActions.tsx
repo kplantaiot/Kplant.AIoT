@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2, X } from "lucide-react";
 import { PlantPicker } from "@/app/(app)/_components/PlantPicker";
 
-type Plant = { id: string; name: string; species: string | null; location: string | null };
+type Plant = { id: string; name: string; species: string | null; location: string | null; species_id: string | null };
 
 export function PlantActions({ plant }: { plant: Plant }) {
   const router = useRouter();
@@ -13,6 +13,7 @@ export function PlantActions({ plant }: { plant: Plant }) {
   const [deleting, setDeleting] = useState(false);
   const [name, setName] = useState(plant.name);
   const [species, setSpecies] = useState(plant.species ?? "");
+  const [speciesId, setSpeciesId] = useState<string | null>(plant.species_id ?? null);
   const [location, setLocation] = useState(plant.location ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,7 +26,7 @@ export function PlantActions({ plant }: { plant: Plant }) {
     const res = await fetch(`/api/plants/${plant.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, species, location }),
+      body: JSON.stringify({ name, species, location, species_id: speciesId }),
     });
     setLoading(false);
     if (!res.ok) { setError("No se pudo guardar."); return; }
@@ -111,9 +112,10 @@ export function PlantActions({ plant }: { plant: Plant }) {
             {showPicker && (
               <div className="mt-1">
                 <PlantPicker
-                  selected={species}
+                  selectedId={speciesId}
                   onSelect={s => {
-                    setSpecies(s.scientific_name);
+                    setSpecies(s.common_name);
+                    setSpeciesId(s.id);
                     setShowPicker(false);
                   }}
                 />

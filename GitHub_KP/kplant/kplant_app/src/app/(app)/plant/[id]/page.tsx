@@ -6,6 +6,7 @@ import { soilLabel, lightLabel } from "@/lib/types";
 import { PlantCharts } from "./PlantCharts";
 import { PlantActions } from "./PlantActions";
 import { PlantRangeSelector } from "./PlantRangeSelector";
+import { AutoRefresh } from "../../_components/AutoRefresh";
 
 const RANGE_CONFIG: Record<string, { hours: number; limit: number }> = {
   "1h":  { hours: 1,   limit: 60  },
@@ -38,7 +39,7 @@ export default async function PlantPage({
 
   const { data: plant } = await supabase
     .from("plants")
-    .select("*, devices(id, device_id, last_seen, sensor_health)")
+    .select("*, devices(id, device_id, last_seen, sensor_health), plant_species(id, common_name, scientific_name, light_need, water_frequency, ideal_temp_min, ideal_temp_max, ideal_humidity_min, ideal_humidity_max, soil_min_pct, soil_max_pct, light_min_lux, light_max_lux)")
     .eq("id", id)
     .eq("owner_id", user!.id)
     .maybeSingle();
@@ -46,6 +47,7 @@ export default async function PlantPage({
   if (!plant) notFound();
 
   const device = plant.devices?.[0] ?? null;
+  const speciesData = (plant as any).plant_species ?? null;
 
   const readings: any[] = [];
   if (device?.device_id) {
@@ -76,6 +78,7 @@ export default async function PlantPage({
 
   return (
     <div className="max-w-lg mx-auto pb-24">
+      <AutoRefresh intervalMs={30000} />
 
       {/* ── GREEN HERO HEADER ── */}
       <div
@@ -214,9 +217,114 @@ export default async function PlantPage({
           </Link>
         )}
 
+        {/* Especie info card */}
+        {speciesData && (
+          <div className="bg-white rounded-3xl p-5 shadow-sm border" style={{ borderColor: "hsl(var(--border))" }}>
+            <h2 className="text-xs font-semibold tracking-wider uppercase mb-3" style={{ color: "var(--color-sage-text)" }}>
+              ESPECIE
+            </h2>
+            <p className="text-base font-semibold leading-tight" style={{ color: "var(--color-charcoal-green)" }}>
+              {speciesData.common_name}
+            </p>
+            <p className="text-xs italic mt-0.5 mb-4" style={{ color: "var(--color-sage-text)" }}>
+              {speciesData.scientific_name}
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {speciesData.light_need && (
+                <SpeciesBadge icon="☀️" label="Luz" value={LIGHT_LABELS[speciesData.light_need] ?? speciesData.light_need} />
+              )}
+              {speciesData.water_frequency && (
+                <SpeciesBadge icon="💧" label="Riego" value={WATER_LABELS[speciesData.water_frequency] ?? speciesData.water_frequency} />
+              )}
+              {speciesData.ideal_temp_min != null && speciesData.ideal_temp_max != null && (
+                <SpeciesBadge icon="🌡️" label="Temperatura" value={`${speciesData.ideal_temp_min}–${speciesData.ideal_temp_max}°C`} />
+              )}
+              {speciesData.ideal_humidity_min != null && speciesData.ideal_humidity_max != null && (
+                <SpeciesBadge icon="🌫️" label="Humedad aire" value={`${speciesData.ideal_humidity_min}–${speciesData.ideal_humidity_max}%`} />
+              )}
+            </div>
+            {/* Alertas de sensores vs umbrales */}
+            {latest && speciesData.soil_min_pct != null && (
+              <div className="mt-3 pt-3 border-t flex flex-col gap-1.5" style={{ borderColor: "hsl(var(--border))" }}>
+                <ThresholdBar
+                  label="Suelo"
+                  value={latest.soil_moisture}
+                  min={speciesData.soil_min_pct}
+                  max={speciesData.soil_max_pct}
+                  unit="%"
+                />
+                {speciesData.light_min_lux != null && (
+                  <ThresholdBar
+                    label="Luz"
+                    value={latest.light_lux}
+                    min={speciesData.light_min_lux}
+                    max={speciesData.light_max_lux}
+                    unit=" lux"
+                    displayFmt={v => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${Math.round(v)}`}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Edit / Delete */}
-        <PlantActions plant={{ id: plant.id, name: plant.name, species: plant.species ?? null, location: plant.location ?? null }} />
+        <PlantActions plant={{ id: plant.id, name: plant.name, species: plant.species ?? null, location: plant.location ?? null, species_id: (plant as any).species_id ?? null }} />
       </div>
+    </div>
+  );
+}
+
+const LIGHT_LABELS: Record<string, string> = {
+  sol_directo:   "Sol directo",
+  luz_indirecta: "Luz indirecta",
+  media_luz:     "Media luz",
+  sombra:        "Sombra",
+};
+const WATER_LABELS: Record<string, string> = {
+  diario:      "Diario",
+  cada_2_dias: "Cada 2 días",
+  semanal:     "Semanal",
+  quincenal:   "Quincenal",
+};
+
+function SpeciesBadge({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div className="rounded-xl p-2.5" style={{ background: "hsl(var(--muted))" }}>
+      <div className="text-[10px] uppercase tracking-wide mb-0.5" style={{ color: "var(--color-sage-text)" }}>
+        {icon} {label}
+      </div>
+      <div className="text-xs font-semibold" style={{ color: "var(--color-charcoal-green)" }}>{value}</div>
+    </div>
+  );
+}
+
+function ThresholdBar({
+  label, value, min, max, unit, displayFmt,
+}: {
+  label: string;
+  value: number | null;
+  min: number;
+  max: number;
+  unit: string;
+  displayFmt?: (v: number) => string;
+}) {
+  if (value === null) return null;
+  const ok = value >= min && value <= max;
+  const low = value < min;
+  const pct = Math.min(Math.max(((value - 0) / (max * 1.2)) * 100, 0), 100);
+  const color = ok ? "#2B7830" : low ? "#C05621" : "#3A86FF";
+  const fmt = displayFmt ?? ((v: number) => `${Math.round(v)}`);
+  const status = ok ? "Óptimo" : low ? "Bajo" : "Alto";
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] w-10 flex-shrink-0" style={{ color: "var(--color-sage-text)" }}>{label}</span>
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--muted))" }}>
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <span className="text-[10px] font-semibold w-16 text-right" style={{ color }}>
+        {fmt(value)}{unit} · {status}
+      </span>
     </div>
   );
 }

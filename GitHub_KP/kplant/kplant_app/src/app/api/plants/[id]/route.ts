@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { name, species, location } = body;
+  const { name, species, location, species_id } = body;
 
   if (!name?.trim()) {
     return NextResponse.json({ error: "El nombre es requerido." }, { status: 400 });
@@ -16,7 +16,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data, error } = await supabase
     .from("plants")
-    .update({ name: name.trim(), species: species?.trim() || null, location: location?.trim() || null })
+    .update({
+      name: name.trim(),
+      species: species?.trim() || null,
+      location: location?.trim() || null,
+      species_id: species_id ?? null,
+    })
     .eq("id", id)
     .eq("owner_id", user.id)
     .select()

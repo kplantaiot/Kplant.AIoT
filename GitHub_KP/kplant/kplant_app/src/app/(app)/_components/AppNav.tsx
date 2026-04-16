@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Plus, Settings, LogOut, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
+import { AlertsPanel } from "./AlertsPanel";
 
 const NAV_ITEMS = [
   { href: "/today",    label: "Inicio",  icon: Home },
@@ -67,18 +68,23 @@ export function AppNav({ admin = false }: { admin?: boolean }) {
           )}
         </div>
 
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
-          style={{ color: "rgba(255,255,255,0.5)" }}
-        >
-          <LogOut className="w-4 h-4" />
-          Salir
-        </button>
+        <div className="flex items-center gap-1">
+          <div className="text-white opacity-70">
+            <AlertsPanel />
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors"
+            style={{ color: "rgba(255,255,255,0.5)" }}
+          >
+            <LogOut className="w-4 h-4" />
+            Salir
+          </button>
+        </div>
       </nav>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50" style={{ borderColor: "hsl(var(--border))" }}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-40" style={{ borderColor: "hsl(var(--border))" }}>
         <div className="flex items-center justify-around px-2 py-2 pb-safe">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
@@ -104,6 +110,10 @@ export function AppNav({ admin = false }: { admin?: boolean }) {
               <span className="text-[10px] font-medium">Admin</span>
             </Link>
           )}
+          <div className="flex flex-col items-center gap-1 px-3 py-1.5">
+            <AlertsPanel />
+            <span className="text-[10px] font-medium" style={{ color: "var(--color-sage-text)" }}>Alertas</span>
+          </div>
         </div>
       </nav>
     </>
